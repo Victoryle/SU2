@@ -1175,6 +1175,7 @@ enum class LM_OPTIONS {
   MEDIDA_BAEDER,/*!< \brief Kind of transition correlation model (Medida-Baeder). */
   MEDIDA,       /*!< \brief Kind of transition correlation model (Medida). */
   MENTER_LANGTRY,   /*!< \brief Kind of transition correlation model (Menter-Langtry). */
+  FAN,          /*!< \brief Kind of transition correlation model (FAN). */
   DEFAULT       /*!< \brief Kind of transition correlation model (Menter-Langtry if SST, MALAN if SA). */
 };
 
@@ -1187,6 +1188,7 @@ static const MapType<std::string, LM_OPTIONS> LM_Options_Map = {
   MakePair("KRAUSE_HYPER", LM_OPTIONS::KRAUSE_HYPER)
   MakePair("MEDIDA_BAEDER", LM_OPTIONS::MEDIDA_BAEDER)
   MakePair("MENTER_LANGTRY", LM_OPTIONS::MENTER_LANGTRY)
+  MakePair("FAN", LM_OPTIONS::FAN)
   MakePair("DEFAULT", LM_OPTIONS::DEFAULT)
 };
 
@@ -1201,6 +1203,7 @@ enum class TURB_TRANS_CORRELATION {
   MEDIDA_BAEDER,/*!< \brief Kind of transition correlation model (Medida-Baeder). */
   MEDIDA,       /*!< \brief Kind of transition correlation model (Medida). */
   MENTER_LANGTRY,   /*!< \brief Kind of transition correlation model (Menter-Langtry). */
+  FAN,   /*!< \brief Kind of transition correlation model (FAN). */
   DEFAULT       /*!< \brief Kind of transition correlation model (Menter-Langtry if SST, MALAN if SA). */
 };
 
@@ -1210,6 +1213,7 @@ enum class TURB_TRANS_CORRELATION {
 struct LM_ParsedOptions {
   LM_OPTIONS version = LM_OPTIONS::NONE;  /*!< \brief LM base model. */
   bool LM2015 = false;                    /*!< \brief Use cross-flow corrections. */
+  bool LMFAN = false;                    /*!< \brief LM(Menter-Langtry) modified by FAN */
   TURB_TRANS_CORRELATION Correlation = TURB_TRANS_CORRELATION::DEFAULT;
 };
 
@@ -1229,6 +1233,7 @@ inline LM_ParsedOptions ParseLMOptions(const LM_OPTIONS *LM_Options, unsigned sh
   };
 
   LMParsedOptions.LM2015 = IsPresent(LM_OPTIONS::LM2015);
+  LMParsedOptions.LMFAN = IsPresent(LM_OPTIONS::FAN);
 
   int NFoundCorrelations = 0;
   if (IsPresent(LM_OPTIONS::MALAN)) {

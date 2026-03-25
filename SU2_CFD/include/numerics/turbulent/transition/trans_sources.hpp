@@ -145,6 +145,9 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         const su2double r_omega = Density_i * dist_i * dist_i * ScalarVar_i[1] / Laminar_Viscosity_i;
         const su2double f_sub = exp(-pow(r_omega / 200.0, 2));
         F_length = Corr_F_length * (1. - f_sub) + 40.0 * f_sub;
+        if (options.LMFAN) {
+          F_length = 20.0 * (1.0 - f_sub) + 40.0 * f_sub;
+        }
       }
       if (TurbFamily == TURB_FAMILY::SA) F_length = Corr_F_length;
 
@@ -154,9 +157,98 @@ class CSourcePieceWise_TransLM final : public CNumerics {
       if (TurbFamily == TURB_FAMILY::SA) R_t = Eddy_Viscosity_i / Laminar_Viscosity_i;
 
       const su2double Re_v = Density_i * dist_i * dist_i * StrainMag_i / Laminar_Viscosity_i;
-      const su2double F_onset1 = Re_v / (2.193 * Corr_Rec);
+      su2double F_onset1 = Re_v / (2.193 * Corr_Rec);
       su2double F_onset2 = 1.0;
       su2double F_onset3 = 1.0;
+
+      /*--- Hypersonic Correction for streamwise & crossflow transition by Fan (Used in LMFAN) ---*/
+      const su2double sos = V_i[idx.SoundSpeed()];
+      const su2double rho_inf = config->GetDensity_FreeStream();
+      const su2double p_inf = config->GetPressure_FreeStream();
+      const su2double velU_inf = config->GetVelocity_FreeStream()[0];
+      const su2double velV_inf = config->GetVelocity_FreeStream()[1];
+      const su2double velW_inf = (nDim == 3) ? config->GetVelocity_FreeStream()[2] : 0.0;
+      const su2double velMag_inf = pow(velU_inf * velU_inf + velV_inf * velV_inf + velW_inf * velW_inf, 0.5);
+      const su2double gamma_Spec = config->GetGamma();
+      const su2double p = V_i[idx.Pressure()];
+      const su2double sos_inf = pow(config->GetTemperature_FreeStream() * config->GetGas_Constant() * gamma_Spec, 0.5);
+      const su2double temperature_local = V_i[idx.Temperature()];
+      const su2double Twall = 300.0;
+
+      su2double F_onset_s = 0.0;
+      su2double F_onset_cf = 0.0;
+
+      su2double rho_eL = 0.0, U_eL = 0.0, a_eL = 0.0, T_eL = 0.0, Ma_eL = 0.0, He = 0.0;
+
+      rho_eL = pow(rho_inf, gamma_Spec) * p / p_inf;
+      rho_eL = pow(rho_eL, 1 / gamma_Spec);
+      U_eL = gamma_Spec / (gamma_Spec -1.0) * p_inf / rho_inf + 0.5 * velMag_inf * velMag_inf;
+      U_eL -= gamma_Spec / (gamma_Spec -1.0) * p / rho_eL;
+      U_eL = pow(U_eL * 2.0, 0.5);
+      a_eL = sos_inf * sos_inf / (gamma_Spec -1) + velMag_inf * velMag_inf / 2.0;
+      a_eL -= U_eL * U_eL / 2.0;
+      a_eL = pow(a_eL * (gamma_Spec -1), 0.5);
+      T_eL = a_eL * a_eL / gamma_Spec / config->GetGas_Constant();
+      Ma_eL = U_eL / a_eL;
+
+      su2double a1 = + 1.882e-4 * Ma_eL * Ma_eL * Ma_eL + 4.544e-3 * Ma_eL * Ma_eL - 1.954e-1 * Ma_eL + 1.748;
+      su2double a2 = + 1.667e-4 * Ma_eL * Ma_eL * Ma_eL - 2.171e-3 * Ma_eL * Ma_eL - 2.937e-2 * Ma_eL - 0.5902;
+      su2double a3 = - 8.928e-4 * Ma_eL * Ma_eL * Ma_eL + 2.041e-2 * Ma_eL * Ma_eL + 9.166e-2 * Ma_eL + 0.4975;
+
+      su2double F_ratio = a1 * pow(T_eL / Twall, a2) + a3;
+
+      if (nDim == 2) {
+        He = 0.0;
+      }
+      else {
+        /*
+        su2double VelocityNormalized[3];
+        VelocityNormalized[0] = vel_u / Velocity_Mag;
+        VelocityNormalized[1] = vel_v / Velocity_Mag;
+        if (nDim == 3) VelocityNormalized[2] = vel_w / Velocity_Mag;
+
+        su2double StreamwiseVort = 0.0;
+        for (auto iDim =0u; iDim < nDim; iDim++) {
+          StreamwiseVort += VelocityNormalized[iDim] * Vorticity_i[iDim];
+        }
+        StreamwiseVort = abs(StreamwiseVort);
+        He = StreamwiseVort
+        */
+
+        const su2double unitU = V_i[idx.Velocity()] / Velocity_Mag;
+        const su2double unitV = V_i[idx.Velocity() + 1] / Velocity_Mag;
+        const su2double unitW = V_i[idx.Velocity() + 2] / Velocity_Mag;
+
+        const su2double vorticity_x = Vorticity_i[0];
+        const su2double vorticity_y = Vorticity_i[1];
+        const su2double vorticity_z = Vorticity_i[2];
+
+        const su2double UVor_x = unitU * vorticity_x;
+        const su2double VVor_y = unitV * vorticity_y;
+        const su2double WVor_z = unitW * vorticity_z;
+        
+        He = pow(UVor_x * UVor_x + VVor_y * VVor_y + WVor_z * WVor_z, 0.5);
+      }
+      
+      su2double delH_cf = 0.0;
+      su2double H_cf = 0.0;
+      su2double C_cf = 28.0;
+
+      const su2double H_CF = He * dist_i / Velocity_Mag;
+      const su2double delH_CF = H_CF *(1.0 + min(Eddy_Viscosity_i / Laminar_Viscosity_i, 0.4));
+      H_cf = He * dist_i / Velocity_Mag;
+      delH_cf = H_CF *(1.0 + min(Eddy_Viscosity_i / Laminar_Viscosity_i, 0.4));
+
+
+      su2double F_Tu = config->GetTurbulenceIntensity_FreeStream();
+      if (F_Tu < 0.001) C_cf = 45.0;
+
+      if (options.LMFAN) {
+        F_onset_s = Re_v / F_ratio / Corr_Rec;
+        F_onset_cf = delH_cf * Re_v / F_ratio / C_cf;
+        F_onset1 = max(F_onset_s, F_onset_cf);
+      }
+
       if (TurbFamily == TURB_FAMILY::KW) {
         F_onset2 = min(max(F_onset1, pow(F_onset1, 4.0)), 2.0);
         F_onset3 = max(1.0 - pow(R_t / 2.5, 3.0), 0.0);
@@ -213,13 +305,18 @@ class CSourcePieceWise_TransLM final : public CNumerics {
       const su2double Corr_Ret_lim = 20.0;
       su2double f_lambda = 1.0;
 
-      su2double Retheta_Error = 200.0, Retheta_old = 0.0;
+      su2double Retheta_Error = 200.0, Retheta_old = 0.1;
       su2double lambda = 0.0;
       su2double Corr_Ret = 20.0;
 
       for (int iter = 0; iter < 100; iter++) {
         su2double theta = Corr_Ret * Laminar_Viscosity_i / Density_i / Velocity_Mag;
         lambda = Density_i * theta * theta / Laminar_Viscosity_i * du_ds;
+
+        if (options.LMFAN) {
+          lambda = lambda * (1.0 + (gamma_Spec - 1.0) / 2.0 * Ma_eL * Ma_eL);
+        }
+
         lambda = min(max(-0.1, lambda), 0.1);
 
         if (lambda <= 0.0) {
@@ -234,6 +331,13 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         } else {
           Corr_Ret = 331.5 * f_lambda * pow(Tu - 0.5658, -0.671);
         }
+        
+        if (options.LMFAN) {
+          su2double fMa_eL = -83.16 * pow(Ma_eL, -4.095) + 1.509;
+          fMa_eL = max(fMa_eL, 0.1);
+          Corr_Ret = Corr_Ret / fMa_eL;
+        }
+
         Corr_Ret = max(Corr_Ret, Corr_Ret_lim);
 
         Retheta_Error = fabs(Retheta_old - Corr_Ret) / Retheta_old;
