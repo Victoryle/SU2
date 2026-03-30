@@ -43,6 +43,18 @@ CTransLMVariable::CTransLMVariable(su2double Intermittency, su2double ReThetaT, 
   Intermittency_Eff.resize(nPoint) = gammaEff;
   Intermittency_Sep.resize(nPoint) = gammaSep;
 
+  /*--- Setting CTransLMVariable of Wonder value---*/
+  TempVar1.resize(nPoint) = 0.0;
+  TempVar2.resize(nPoint) = 0.0;
+  TempVar3.resize(nPoint) = 0.0;
+  TempVar4.resize(nPoint) = 0.0;
+  TempVar5.resize(nPoint) = 0.0;
+  TempVar6.resize(nPoint) = 0.0;
+  TempVar7.resize(nPoint) = 0.0;
+  TempVar8.resize(nPoint) = 0.0;
+  TempVar9.resize(nPoint) = 0.0;
+  TempVar10.resize(nPoint) = 0.0;
+
 }
 
 void CTransLMVariable::SetIntermittencyEff(unsigned long iPoint, su2double val_Intermittency_sep) {
@@ -55,3 +67,18 @@ void CTransLMVariable::SetIntermittencyEff(unsigned long iPoint, su2double val_I
 void CTransLMVariable::SetIntermittencySep(unsigned long iPoint, su2double val_Intermittency_sep) {
   Intermittency_Sep(iPoint) = val_Intermittency_sep;
 }
+
+void CTransLMVariable::SetLM_Wonder_Func(unsigned long iPoint, su2double var1, su2double var2, su2double var3, 
+                                          su2double var4, su2double var5, su2double var6,su2double var7, 
+                                          su2double var8, su2double var9, su2double var10) {
+  TempVar1(iPoint) = var1;
+  TempVar2(iPoint) = var2;
+  TempVar3(iPoint) = var3;
+  TempVar4(iPoint) = var4;
+  TempVar5(iPoint) = var5;
+  TempVar6(iPoint) = var6;
+  TempVar7(iPoint) = var7;
+  TempVar8(iPoint) = var8;
+  TempVar9(iPoint) = var9;
+  TempVar10(iPoint) = var10;
+  }

@@ -1414,6 +1414,18 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
       AddVolumeOutput("INTERMITTENCY_SEP", "LM_gamma_sep", "PRIMITIVE", "LM intermittency");
       AddVolumeOutput("INTERMITTENCY_EFF", "LM_gamma_eff", "PRIMITIVE", "LM RE_THETA_T");
       AddVolumeOutput("TURB_INDEX", "Turb_index", "PRIMITIVE", "Turbulence index");
+      if(config->GetLMParsedOptions().LMFAN) {
+        AddVolumeOutput("Me", "Me", "PRIMITIVE", "Me");
+        AddVolumeOutput("Te", "Te", "PRIMITIVE", "Te");
+        AddVolumeOutput("rhoe", "rhoe", "PRIMITIVE", "rhoe");
+        AddVolumeOutput("Stream_Vortex", "Stream_Vortex", "PRIMITIVE", "Stream_Vortex");
+        AddVolumeOutput("He", "He", "PRIMITIVE", "He");
+        AddVolumeOutput("H_CF", "H_CF", "PRIMITIVE", "H_CF");
+        AddVolumeOutput("delH_cf", "delH_cf", "PRIMITIVE", "delH_cf");
+        AddVolumeOutput("F_onset_s", "F_onset_s", "PRIMITIVE", "F_onset_s");
+        AddVolumeOutput("F_onset_cf", "F_onset_cf", "PRIMITIVE", "F_onset_cf");
+        AddVolumeOutput("F_onset", "F_onset", "PRIMITIVE", "F_onset");
+      }
       break;
 
     case TURB_TRANS_MODEL::NONE:
@@ -1567,7 +1579,21 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
       SetVolumeOutputValue("TURB_INDEX", iPoint, Node_Turb->GetTurbIndex(iPoint));
       SetVolumeOutputValue("RES_INTERMITTENCY", iPoint, trans_solver->LinSysRes(iPoint, 0));
       SetVolumeOutputValue("RES_RE_THETA_T", iPoint, trans_solver->LinSysRes(iPoint, 1));
+      
+      if(config->GetLMParsedOptions().LMFAN) {
+        SetVolumeOutputValue("Me", iPoint, Node_Trans->GetLM_Wonder_Func_var1(iPoint));
+        SetVolumeOutputValue("Te", iPoint, Node_Trans->GetLM_Wonder_Func_var2(iPoint));
+        SetVolumeOutputValue("rhoe", iPoint, Node_Trans->GetLM_Wonder_Func_var3(iPoint));
+        SetVolumeOutputValue("Stream_Vortex", iPoint, Node_Trans->GetLM_Wonder_Func_var4(iPoint));
+        SetVolumeOutputValue("He", iPoint, Node_Trans->GetLM_Wonder_Func_var5(iPoint));
+        SetVolumeOutputValue("H_CF", iPoint, Node_Trans->GetLM_Wonder_Func_var6(iPoint));
+        SetVolumeOutputValue("delH_cf", iPoint, Node_Trans->GetLM_Wonder_Func_var7(iPoint));
+        SetVolumeOutputValue("F_onset_s", iPoint, Node_Trans->GetLM_Wonder_Func_var8(iPoint));
+        SetVolumeOutputValue("F_onset_cf", iPoint, Node_Trans->GetLM_Wonder_Func_var9(iPoint));
+        SetVolumeOutputValue("F_onset", iPoint, Node_Trans->GetLM_Wonder_Func_var10(iPoint));
+        
       break;
+      }
 
     case TURB_TRANS_MODEL::NONE: break;
   }

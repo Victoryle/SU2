@@ -1707,6 +1707,39 @@ public:
   inline virtual void SetIntermittencyEff(unsigned long iPoint, su2double val_Intermittency_eff) {}
 
   /*!
+   * \brief Set the Wonder value for LM transition model
+   * \param[in] val_iPoint - Value of the iPoint.
+   * \param[in] tempVar1 - temp variable.
+   * \param[in] tempVar2 - temp variable.
+   * \param[in] tempVar3 - temp variable.
+   * \param[in] tempVar4 - temp variable.
+   * \param[in] tempVar5 - temp variable.
+   * \param[in] tempVar6 - temp variable.
+   * \param[in] tempVar7 - temp variable.
+   * \param[in] tempVar8 - temp variable.
+   * \param[in] tempVar9 - temp variable.
+   * \param[in] tempVar10 - temp variable.
+   */
+  inline virtual void SetLM_Wonder_Func(unsigned long iPoint, su2double tempVar1, su2double tempVar2, su2double tempVar3,
+                                                      su2double tempVar4, su2double tempVar5, su2double tempVar6,su2double tempVar7,
+                                                      su2double tempVar8, su2double tempVar9, su2double tempVar10) {}
+  
+  /*!
+   * \brief Get the value of Wonder variable for LM transition model
+   * \return the value of Wonder variable
+   */
+  inline virtual su2double GetLM_Wonder_Func_var1(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var2(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var3(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var4(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var5(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var6(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var7(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var8(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var9(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetLM_Wonder_Func_var10(unsigned long iPoint) const {return 0.0;}
+
+  /*!
    * \brief Set the value of the eddy viscosity.
    * \param[in] val_muT
    */
