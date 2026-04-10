@@ -1126,6 +1126,8 @@ void CConfig::SetConfig_Options() {
   addEnumOption("KIND_TRANS_MODEL", Kind_Trans_Model, Trans_Model_Map, TURB_TRANS_MODEL::NONE);
   /*!\brief SST_OPTIONS \n DESCRIPTION: Specify LM transition model options/correlations. \n Options: see \link LM_Options_Map \endlink \n DEFAULT: NONE \ingroup Config*/
   addEnumListOption("LM_OPTIONS", nLM_Options, LM_Options, LM_Options_Map);
+  /*!\brief SST_OPTIONS \n DESCRIPTION: */
+  addDoubleOption("FAN_TWALL", FAN_Twall, 300.0);
   /*!\brief HROUGHNESS \n DESCRIPTION: Value of RMS roughness for transition model \n DEFAULT: 1E-6 \ingroup Config*/
   addDoubleOption("HROUGHNESS", hRoughness, 1e-6);
 

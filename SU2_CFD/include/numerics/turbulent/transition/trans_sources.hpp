@@ -173,7 +173,7 @@ class CSourcePieceWise_TransLM final : public CNumerics {
       const su2double p = V_i[idx.Pressure()];
       const su2double sos_inf = pow(config->GetTemperature_FreeStream() * config->GetGas_Constant() * gamma_Spec, 0.5);
       const su2double temperature_local = V_i[idx.Temperature()];
-      const su2double Twall = 300.0;
+      const su2double Twall = config->GetFAN_Twall();
 
       su2double F_onset_s = 0.0;
       su2double F_onset_cf = 0.0;

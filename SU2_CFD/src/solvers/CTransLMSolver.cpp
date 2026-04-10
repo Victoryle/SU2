@@ -268,7 +268,7 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
       const su2double p = flowNodes->GetPressure(iPoint);
       const su2double sos_inf = pow(config->GetTemperature_FreeStream() * config->GetGas_Constant() * gamma_Spec, 0.5);
       const su2double temperature_local = flowNodes->GetTemperature(iPoint);
-      const su2double Twall = 300.0;
+      const su2double Twall = config->GetFAN_Twall();
 
       const su2double M_inf = velMag_inf / sos_inf;
       const su2double T0 = config->GetTemperature_FreeStream() * (1 + (gamma_Spec - 1.0) / 2.0 * M_inf * M_inf);

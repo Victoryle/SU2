@@ -609,6 +609,7 @@ private:
   TURB_SGS_MODEL Kind_SGS_Model;    /*!< \brief LES SGS model definition. */
   TURB_TRANS_MODEL Kind_Trans_Model;  /*!< \brief Transition model definition. */
   TURB_TRANS_CORRELATION Kind_Trans_Correlation;  /*!< \brief Transition correlation model definition. */
+  su2double FAN_Twall;
   su2double hRoughness;             /*!< \brief RMS roughness for Transition model. */
   unsigned short Kind_ActDisk, Kind_Engine_Inflow,
   *Kind_Data_Riemann,
@@ -4378,6 +4379,12 @@ public:
    * \return Kind of the transition correlation.
    */
   TURB_TRANS_CORRELATION GetKind_Trans_Correlation(void) const { return Kind_Trans_Correlation; }
+
+  /*!
+   * \brief Get FAN Wall Temperature temp.
+   * \return FAN Wall Temperature.
+   */
+  su2double GetFAN_Twall(void) const { return FAN_Twall; }
 
   /*!
    * \brief Get RMS roughness for Transtion model from config
