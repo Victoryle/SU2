@@ -140,8 +140,8 @@ void CAvgGrad_Base::SetStressTensor(const su2double *val_primvar,
   } else {
     const su2double total_viscosity = val_laminar_viscosity + val_eddy_viscosity;
     // turb_ke is not considered in the stress tensor, see #797
-    // ComputeStressTensor(nDim, tau, val_gradprimvar+1, total_viscosity, Density, su2double(0.0)); // SU2 original form - bug
-    ComputeStressTensor(nDim, tau, val_gradprimvar+1, total_viscosity, Density, val_turb_ke); // SU2 SST-standard, s
+    ComputeStressTensor(nDim, tau, val_gradprimvar+1, total_viscosity, Density, su2double(0.0)); // SU2 original form, SST-m, e
+    // ComputeStressTensor(nDim, tau, val_gradprimvar+1, total_viscosity, Density, val_turb_ke); // SU2 SST-standard, s
   }
 }
 
