@@ -870,6 +870,12 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       const su2double prod_limit = prod_lim_const * beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0];
 
       su2double P = Eddy_Viscosity_i * pow(P_Base, 2);
+
+      if (sstParsedOptions.version == SST_OPTIONS::V1994) {
+        /*--- INTRODUCE THE SST-V1994m BUG WHERE DIVERGENCE TERM WILL BE REMOVED ---*/
+        P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
+      }
+
       su2double pk = max(0.0, min(P, prod_limit));
 
       const auto& eddy_visc_var = sstParsedOptions.version == SST_OPTIONS::V1994 ? VorticityMag : StrainMag_i;
@@ -878,7 +884,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Production limiter only for V2003, recompute for V1994. ---*/
       su2double pw;
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
-        pw = alfa_blended * Density_i * pow(P_Base, 2);
+        // pw = alfa_blended * Density_i * pow(P_Base, 2); // SU2 original form
+        pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk; // SU2 SST-standard, m, s, e
       } else {
         pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk;
       }
