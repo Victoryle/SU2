@@ -795,7 +795,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
         /*--- INTRODUCE THE SST-V1994m BUG WHERE DIVERGENCE TERM WILL BE REMOVED ---*/
         // P -= 2.0 / 3.0 * Density_i * ScalarVar_i[0] * diverg; // SU2 original form - bug
-        P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
+        // P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
       }
       su2double pk = max(0.0, min(P, prod_limit));
 
