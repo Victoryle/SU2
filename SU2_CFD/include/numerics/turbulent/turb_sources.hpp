@@ -884,8 +884,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Production limiter only for V2003, recompute for V1994. ---*/
       su2double pw;
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
-        // pw = alfa_blended * Density_i * pow(P_Base, 2); // SU2 original form
-        pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk; // SU2 SST-standard, m, s, e
+        pw = alfa_blended * Density_i * pow(P_Base, 2); // SU2 original form
+        // pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk; // SU2 SST-standard, m, s, e
       } else {
         pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk;
       }
