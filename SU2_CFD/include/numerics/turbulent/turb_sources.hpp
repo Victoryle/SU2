@@ -794,7 +794,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
         /*--- INTRODUCE THE SST-V1994m BUG WHERE DIVERGENCE TERM WILL BE REMOVED ---*/
-        // P -= 2.0 / 3.0 * Density_i * ScalarVar_i[0] * diverg; // SU2 original form - bug
+        P -= 2.0 / 3.0 * Density_i * ScalarVar_i[0] * diverg; // SU2 original form - bug
         // P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
       }
       su2double pk = max(0.0, min(P, prod_limit));
@@ -806,8 +806,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       su2double pw;
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
         /*--- INTRODUCE THE SST-V1994m BUG WHERE DIVERGENCE TERM WILL BE REMOVED ---*/
-        // pw = alfa_blended * Density_i * max(pow(P_Base, 2) - 2.0 / 3.0 * zeta * diverg, 0.0); // SU2 original form - bug
-        pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk; // SU2 SST-standard, m, s, e
+        pw = alfa_blended * Density_i * max(pow(P_Base, 2) - 2.0 / 3.0 * zeta * diverg, 0.0); // SU2 original form - bug
+        // pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk; // SU2 SST-standard, m, s, e
       } else {
         pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk;
       }
