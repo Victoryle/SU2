@@ -830,6 +830,9 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       su2double zetaFMt = 0.0;
       const su2double Mt = sqrt(2.0 * ScalarVar_i[0]) / V_i[idx.SoundSpeed()];
 
+      /*--- compressibility correction of Brown for Mt^2 ---*/
+      const su2double Mt_2 = 2.0 * ScalarVar_i[0] / pow(V_i[idx.SoundSpeed()], 2) * (1.0 - F1_i);
+
       /*--- Apply production term modifications ---*/
       switch (sstParsedOptions.production) {
         case SST_OPTIONS::UQ:
@@ -850,6 +853,20 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
           P_Base = StrainMag_i;
           if (Mt >= 0.25) {
             zetaFMt = 2.0 * (Mt * Mt - 0.25 * 0.25);
+          }
+          break;
+
+        case SST_OPTIONS::COMP_WilcoxSE:
+          P_Base = StrainMag_i;
+          if (pow(Mt, 2) > 0.0625) {
+            zetaFMt = 1.5 * fabs(pow(Mt, 2) - 0.0625);
+          }
+          break;
+
+        case SST_OPTIONS::COMP_Brown:
+          P_Base = StrainMag_i;
+          if (Mt_2 > 0.0625) {
+            zetaFMt = 1.5 * fabs(Mt_2 - 0.0625);
           }
           break;
 

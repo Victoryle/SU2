@@ -3525,6 +3525,14 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
     SU2_MPI::Error("COMPRESSIBILITY-WILCOX only supported for SOLVER= RANS", CURRENT_FUNCTION);
   }
 
+  if (Kind_Solver == MAIN_SOLVER::INC_RANS && sstParsedOptions.compWilcoxSE){
+    SU2_MPI::Error("COMPRESSIBILITY-WILCOX-SE only supported for SOLVER= RANS", CURRENT_FUNCTION);
+  }
+
+  if (Kind_Solver == MAIN_SOLVER::INC_RANS && sstParsedOptions.compBrown){
+    SU2_MPI::Error("COMPRESSIBILITY-Brown only supported for SOLVER= RANS", CURRENT_FUNCTION);
+  }
+
   /*--- Postprocess LM_OPTIONS into structure. ---*/
   if (Kind_Trans_Model == TURB_TRANS_MODEL::LM) {
     lmParsedOptions = ParseLMOptions(LM_Options, nLM_Options, rank, Kind_Turb_Model);
@@ -6293,6 +6301,12 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
                 break;
               case SST_OPTIONS::COMP_Wilcox:
                 cout << " with compressibility correction of Wilcox";
+                break;
+              case SST_OPTIONS::COMP_WilcoxSE:
+                cout << " with compressibility correction of Wilcox Second edition";
+                break;
+              case SST_OPTIONS::COMP_Brown:
+                cout << " with compressibility correction of Brown";
                 break;
               case SST_OPTIONS::COMP_Sarkar:
                 cout << " with compressibility correction of Sarkar";

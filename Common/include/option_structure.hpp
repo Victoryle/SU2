@@ -993,6 +993,8 @@ enum class SST_OPTIONS {
   KL,          /*!< \brief Menter k-w SST model with Kato-Launder production terms. */
   UQ,          /*!< \brief Menter k-w SST model with uncertainty quantification modifications. */
   COMP_Wilcox, /*!< \brief Menter k-w SST model with Compressibility correction of Wilcox. */
+  COMP_WilcoxSE, /*!< \brief Menter k-w SST model with Compressibility correction of Wilcox Second edition. */
+  COMP_Brown, /*!< \brief Menter k-w SST model with Compressibility correction of Brown. */
   COMP_Sarkar, /*!< \brief Menter k-w SST model with Compressibility correction of Sarkar. */
   DLL,         /*!< \brief Menter k-w SST model with dimensionless lower limit clipping of turbulence variables. */
 };
@@ -1008,6 +1010,8 @@ static const MapType<std::string, SST_OPTIONS> SST_Options_Map = {
   MakePair("KATO-LAUNDER", SST_OPTIONS::KL)
   MakePair("UQ", SST_OPTIONS::UQ)
   MakePair("COMPRESSIBILITY-WILCOX", SST_OPTIONS::COMP_Wilcox)
+  MakePair("COMPRESSIBILITY-WILCOX-SE", SST_OPTIONS::COMP_WilcoxSE)
+  MakePair("COMPRESSIBILITY-BROWN", SST_OPTIONS::COMP_Brown)
   MakePair("COMPRESSIBILITY-SARKAR", SST_OPTIONS::COMP_Sarkar)
   MakePair("DIMENSIONLESS_LIMIT", SST_OPTIONS::DLL)
 };
@@ -1022,6 +1026,8 @@ struct SST_ParsedOptions {
   bool uq = false;                            /*!< \brief Bool for using uncertainty quantification. */
   bool modified = false;                      /*!< \brief Bool for modified (m) SST model. */
   bool compWilcox = false;                    /*!< \brief Bool for compressibility correction of Wilcox. */
+  bool compWilcoxSE = false;                    /*!< \brief Bool for compressibility correction of Wilcox Second edition. */
+  bool compBrown = false;                    /*!< \brief Bool for compressibility correction of Brown. */
   bool compSarkar = false;                    /*!< \brief Bool for compressibility correction of Sarkar. */
   bool dll = false;                           /*!< \brief Bool dimensionless lower limit. */
 };
@@ -1060,6 +1066,8 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
   const bool sst_kl = IsPresent(SST_OPTIONS::KL);
   const bool sst_uq = IsPresent(SST_OPTIONS::UQ);
   const bool sst_compWilcox = IsPresent(SST_OPTIONS::COMP_Wilcox);
+  const bool sst_compWilcoxSE = IsPresent(SST_OPTIONS::COMP_WilcoxSE);
+  const bool sst_compBrown = IsPresent(SST_OPTIONS::COMP_Brown);
   const bool sst_compSarkar = IsPresent(SST_OPTIONS::COMP_Sarkar);
   const bool sst_dll = IsPresent(SST_OPTIONS::DLL);
 
@@ -1083,10 +1091,14 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
   }
 
   // Parse compressibility options
-  if (sst_compWilcox && sst_compSarkar) {
-    SU2_MPI::Error("Please select only one compressibility correction (COMPRESSIBILITY-WILCOX or COMPRESSIBILITY-SARKAR).", CURRENT_FUNCTION);
+  if ((int(sst_compWilcox) + int(sst_compSarkar) + int(sst_compBrown) + int(sst_compSarkar)) > 1) {
+    SU2_MPI::Error("Please select only one compressibility correction (COMPRESSIBILITY-WILCOX or COMPRESSIBILITY-WILCOX-SE or COMPRESSIBILITY-BROWN or COMPRESSIBILITY-SARKAR).", CURRENT_FUNCTION);
   } else if (sst_compWilcox) {
     SSTParsedOptions.production = SST_OPTIONS::COMP_Wilcox;
+  } else if (sst_compWilcoxSE) {
+    SSTParsedOptions.production = SST_OPTIONS::COMP_WilcoxSE;
+  } else if (sst_compBrown) {
+    SSTParsedOptions.production = SST_OPTIONS::COMP_Brown;
   } else if (sst_compSarkar) {
     SSTParsedOptions.production = SST_OPTIONS::COMP_Sarkar;
   }
@@ -1095,6 +1107,8 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
   SSTParsedOptions.modified = sst_m;
   SSTParsedOptions.uq = sst_uq;
   SSTParsedOptions.compWilcox = sst_compWilcox;
+  SSTParsedOptions.compWilcoxSE = sst_compWilcoxSE;
+  SSTParsedOptions.compBrown = sst_compBrown;
   SSTParsedOptions.compSarkar = sst_compSarkar;
   SSTParsedOptions.dll = sst_dll;
 
