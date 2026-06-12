@@ -241,8 +241,8 @@ void CTurbSSTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
     const su2double omega = nodes->GetSolution(iPoint,1);
 
     const auto& eddy_visc_var = sstParsedOptions.version == SST_OPTIONS::V1994 ? VorticityMag : StrainMag;
-    //const su2double muT = max(0.0, rho * a1 * kine / max(a1 * omega, eddy_visc_var * F2));
-    const su2double muT = max(0.0, rho * min(a1 * kine / max(a1 * omega, eddy_visc_var * F2), pow(a1 * kine, 0.5) * 0.41 * dist));
+    const su2double muT = max(0.0, rho * a1 * kine / max(a1 * omega, eddy_visc_var * F2));
+    // const su2double muT = max(0.0, rho * min(a1 * kine / max(a1 * omega, eddy_visc_var * F2), pow(a1 * kine, 0.5) * 0.41 * dist));
 
     nodes->SetmuT(iPoint, muT);
 
