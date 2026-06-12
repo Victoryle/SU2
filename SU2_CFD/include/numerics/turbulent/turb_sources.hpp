@@ -890,7 +890,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
         /*--- INTRODUCE THE SST-V1994m BUG WHERE DIVERGENCE TERM WILL BE REMOVED ---*/
-        P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
+        // P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
       }
 
       su2double pk = max(0.0, min(P, prod_limit));
@@ -901,8 +901,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Production limiter only for V2003, recompute for V1994. ---*/
       su2double pw;
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
-        // pw = alfa_blended * Density_i * pow(P_Base, 2); // SU2 original form
-        pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * P; // SU2 SST-standard, m, s, e
+        pw = alfa_blended * Density_i * pow(P_Base, 2); // SU2 original form
+        // pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * P; // SU2 SST-standard, m, s, e
       } else {
         pw = (alfa_blended * Density_i / Eddy_Viscosity_i) * pk;
       }
@@ -956,8 +956,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       /*--- Implicit part ---*/
 
-      // Jacobian_i[0][0] = -beta_star * ScalarVar_i[1] * Volume * (1.0 + zetaFMt);
-      Jacobian_i[0][0] = -(2.0 / 3.0 * diverg + beta_star * ScalarVar_i[1]) * Volume * (1.0 + zetaFMt);
+      Jacobian_i[0][0] = -beta_star * ScalarVar_i[1] * Volume * (1.0 + zetaFMt);
+      // Jacobian_i[0][0] = -(2.0 / 3.0 * diverg + beta_star * ScalarVar_i[1]) * Volume * (1.0 + zetaFMt);
       Jacobian_i[0][1] = -beta_star * ScalarVar_i[0] * Volume * (1.0 + zetaFMt);
       Jacobian_i[1][0] = 0.0;
       Jacobian_i[1][1] = -2.0 * beta_blended * ScalarVar_i[1] * Volume * (1.0 - 0.09/beta_blended * zetaFMt);
