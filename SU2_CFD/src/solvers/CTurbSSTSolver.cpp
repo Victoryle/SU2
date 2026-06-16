@@ -250,7 +250,7 @@ void CTurbSSTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
     const auto velocityGrad  = flowNodes->GetVelocityGradient(iPoint);
     const su2double dist_i = geometry->nodes->GetWall_Distance(iPoint);
 
-    if (dist_i < 1e-10) {
+    if (dist_i > 1e-10) {
       for (unsigned short iDim = 0; iDim < nDim; iDim++) {
         diverg_post += velocityGrad[iDim][iDim];
       }
