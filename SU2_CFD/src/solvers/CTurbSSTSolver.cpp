@@ -246,7 +246,26 @@ void CTurbSSTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
 
     nodes->SetmuT(iPoint, muT);
 
-  }
+    su2double diverg_post = 0.0;
+    const auto velocityGrad  = flowNodes->GetVelocityGradient(iPoint);
+    const su2double dist_i = geometry->nodes->GetWall_Distance(iPoint);
+
+    if (dist_i < 1e-10) {
+      for (unsigned short iDim = 0; iDim < nDim; iDim++) {
+        diverg_post += velocityGrad[iDim][iDim];
+      }
+
+      const su2double Mt_post = sqrt(2.0 * kine) / flowNodes->GetSoundSpeed(iPoint) * (1.0 - nodes->GetF1blending(iPoint));
+
+      nodes->SetSST_Wonder_Func(iPoint, diverg_post, Mt_post);
+    }
+    else {
+      su2double diverg_post_temp = 0.0;
+      su2double Mt_post_temp = 0.0;
+
+      nodes->SetSST_Wonder_Func(iPoint, diverg_post_temp, Mt_post_temp);
+    }
+  } 
   END_SU2_OMP_FOR
 
 

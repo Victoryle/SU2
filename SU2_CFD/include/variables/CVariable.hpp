@@ -1740,6 +1740,21 @@ public:
   inline virtual su2double GetLM_Wonder_Func_var10(unsigned long iPoint) const {return 0.0;}
 
   /*!
+   * \brief Set the Wonder value for SST model
+   * \param[in] val_iPoint - Value of the iPoint.
+   * \param[in] tempVar11 - temp variable.
+   * \param[in] tempVar12 - temp variable.
+   */
+  inline virtual void SetSST_Wonder_Func(unsigned long iPoint, su2double tempVar11, su2double tempVar12) {}
+  
+  /*!
+   * \brief Get the value of Wonder variable for SST model
+   * \return the value of Wonder variable
+   */
+  inline virtual su2double SetSST_Wonder_Func_var11(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double SetSST_Wonder_Func_var12(unsigned long iPoint) const {return 0.0;}
+
+  /*!
    * \brief Set the value of the eddy viscosity.
    * \param[in] val_muT
    */

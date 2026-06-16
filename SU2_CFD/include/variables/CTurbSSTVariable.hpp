@@ -45,6 +45,8 @@ protected:
   VectorType F2;    /*!< \brief Menter blending function for blending of k-w and k-eps. */
   VectorType CDkw;  /*!< \brief Cross-diffusion. */
   SST_ParsedOptions sstParsedOptions;
+  VectorType TempVar11, TempVar12; 
+
 public:
   /*!
    * \brief Constructor of the class.
@@ -74,6 +76,11 @@ public:
   void SetBlendingFunc(unsigned long iPoint, su2double val_viscosity, su2double val_dist, su2double val_density, TURB_TRANS_MODEL trans_model) override;
 
   /*!
+   * \brief Set Wonder variable.
+   */
+  void SetSST_Wonder_Func(unsigned long iPoint, su2double tempVar11, su2double tempVar12) override;
+
+  /*!
    * \brief Get the first blending function.
    */
   inline su2double GetF1blending(unsigned long iPoint) const override { return F1(iPoint); }
@@ -87,4 +94,8 @@ public:
    * \brief Get the value of the cross diffusion of tke and omega.
    */
   inline su2double GetCrossDiff(unsigned long iPoint) const override { return CDkw(iPoint); }
+
+  inline su2double SetSST_Wonder_Func_var11(unsigned long iPoint) const override { return TempVar11(iPoint);}
+  inline su2double SetSST_Wonder_Func_var12(unsigned long iPoint) const override { return TempVar12(iPoint);}
+
 };
