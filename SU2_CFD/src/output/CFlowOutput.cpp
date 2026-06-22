@@ -1435,8 +1435,8 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
   if (config->GetKind_Turb_Model() != TURB_MODEL::NONE) {
     AddVolumeOutput("EDDY_VISCOSITY", "Eddy_Viscosity", "PRIMITIVE", "Turbulent eddy viscosity");
     
-    AddVolumeOutput("diverg_post", "diverg_post", "PRIMITIVE", "diverg_post");
-    AddVolumeOutput("Mt_post", "Mt_post", "PRIMITIVE", "Mt_post");
+    // AddVolumeOutput("diverg_post", "diverg_post", "PRIMITIVE", "diverg_post");
+    // AddVolumeOutput("Mt_post", "Mt_post", "PRIMITIVE", "Mt_post");
   }
 
 }
@@ -1568,8 +1568,8 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
     SetVolumeOutputValue("TURB_DELTA_TIME", iPoint, Node_Turb->GetDelta_Time(iPoint));
     SetVolumeOutputValue("TURB_CFL", iPoint, Node_Turb->GetLocalCFL(iPoint));
 
-    SetVolumeOutputValue("diverg_post", iPoint, Node_Turb->SetSST_Wonder_Func_var11(iPoint));
-    SetVolumeOutputValue("Mt_post", iPoint, Node_Turb->SetSST_Wonder_Func_var12(iPoint));
+    // SetVolumeOutputValue("diverg_post", iPoint, Node_Turb->SetSST_Wonder_Func_var11(iPoint));
+    // SetVolumeOutputValue("Mt_post", iPoint, Node_Turb->SetSST_Wonder_Func_var12(iPoint));
   }
 
   if (config->GetSAParsedOptions().bc) {

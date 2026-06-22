@@ -52,9 +52,9 @@ CTurbSSTVariable::CTurbSSTVariable(su2double kine, su2double omega, su2double mu
 
   muT.resize(nPoint) = mut;
 
-  /*--- Setting CTurbSSTVariable of Wonder value---*/
-  TempVar11.resize(nPoint) = 0.0;
-  TempVar12.resize(nPoint) = 0.0;
+  // /*--- Setting CTurbSSTVariable of Wonder value---*/
+  // TempVar11.resize(nPoint) = 0.0;
+  // TempVar12.resize(nPoint) = 0.0;
 }
 
 void CTurbSSTVariable::SetBlendingFunc(unsigned long iPoint, su2double val_viscosity,
@@ -100,7 +100,7 @@ void CTurbSSTVariable::SetBlendingFunc(unsigned long iPoint, su2double val_visco
 
 }
 
-void CTurbSSTVariable::SetSST_Wonder_Func(unsigned long iPoint, su2double var11, su2double var12) {
-  TempVar11(iPoint) = var11;
-  TempVar12(iPoint) = var12;
-}
+// void CTurbSSTVariable::SetSST_Wonder_Func(unsigned long iPoint, su2double var11, su2double var12) {
+//   TempVar11(iPoint) = var11;
+//   TempVar12(iPoint) = var12;
+// }
