@@ -6286,6 +6286,11 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
             if (sstParsedOptions.version == SST_OPTIONS::V1994) cout << "-1994";
             else cout << "-2003";
             if (sstParsedOptions.modified) cout << "m";
+
+            if (sstParsedOptions.SSTstandard) cout << "+switch standard";
+            if (sstParsedOptions.SSTs) cout << "+switch s";
+            if (sstParsedOptions.SSTe) cout << "+switch e";
+
             if (sstParsedOptions.sust) cout << " with sustaining terms,";
 
             switch (sstParsedOptions.production) {

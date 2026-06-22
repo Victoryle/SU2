@@ -992,6 +992,10 @@ enum class SST_OPTIONS {
   V,           /*!< \brief Menter k-w SST model with vorticity production terms. */
   KL,          /*!< \brief Menter k-w SST model with Kato-Launder production terms. */
   UQ,          /*!< \brief Menter k-w SST model with uncertainty quantification modifications. */
+  SST_standard, /*!< \brief Menter k-w SST model - SST*/
+  SST_m,        /*!< \brief Menter k-w SST model - SSTm*/
+  SST_s,        /*!< \brief Menter k-w SST model - SSTs*/
+  SST_e,        /*!< \brief Menter k-w SST model - SSTe*/
   COMP_Wilcox, /*!< \brief Menter k-w SST model with Compressibility correction of Wilcox. */
   COMP_WilcoxSE, /*!< \brief Menter k-w SST model with Compressibility correction of Wilcox Second edition. */
   COMP_Brown, /*!< \brief Menter k-w SST model with Compressibility correction of Brown. */
@@ -1005,6 +1009,9 @@ static const MapType<std::string, SST_OPTIONS> SST_Options_Map = {
   /// TODO: For now we do not support "unmodified" versions of SST.
   //MakePair("V1994", SST_OPTIONS::V1994)
   //MakePair("V2003", SST_OPTIONS::V2003)
+  MakePair("SST-standard", SST_OPTIONS::SST_standard)
+  MakePair("SST-s", SST_OPTIONS::SST_s)
+  MakePair("SST-e", SST_OPTIONS::SST_e)
   MakePair("SUSTAINING", SST_OPTIONS::SUST)
   MakePair("VORTICITY", SST_OPTIONS::V)
   MakePair("KATO-LAUNDER", SST_OPTIONS::KL)
@@ -1022,6 +1029,9 @@ static const MapType<std::string, SST_OPTIONS> SST_Options_Map = {
 struct SST_ParsedOptions {
   SST_OPTIONS version = SST_OPTIONS::V1994;   /*!< \brief Enum SST base model. */
   SST_OPTIONS production = SST_OPTIONS::NONE; /*!< \brief Enum for production corrections/modifiers for SST model. */
+  bool SSTstandard = false;                      /*!< \brief Bool for SSTstandard model. */
+  bool SSTs = false;                      /*!< \brief Bool for SSTs model. */
+  bool SSTe = false;                      /*!< \brief Bool for SSTe model. */
   bool sust = false;                          /*!< \brief Bool for SST model with sustaining terms. */
   bool uq = false;                            /*!< \brief Bool for using uncertainty quantification. */
   bool modified = false;                      /*!< \brief Bool for modified (m) SST model. */
@@ -1061,6 +1071,10 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
   /*--- When V2003m or V1994m is selected, we automatically select sst_m. ---*/
   const bool sst_m = found_1994m || found_2003m || default_version;
 
+  const bool sst_SSTstandard = IsPresent(SST_OPTIONS::SST_standard);
+  const bool sst_SSTs = IsPresent(SST_OPTIONS::SST_s);
+  const bool sst_SSTe = IsPresent(SST_OPTIONS::SST_e);
+
   const bool sst_sust = IsPresent(SST_OPTIONS::SUST);
   const bool sst_v = IsPresent(SST_OPTIONS::V);
   const bool sst_kl = IsPresent(SST_OPTIONS::KL);
@@ -1077,6 +1091,16 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
     SSTParsedOptions.version = SST_OPTIONS::V2003;
   } else {
     SSTParsedOptions.version = SST_OPTIONS::V1994;
+  }
+
+  if ((int(sst_SSTstandard) + int(sst_SSTs) + int(sst_SSTe)) > 1) {
+    SU2_MPI::Error("Please select only one SST type, default SSTm", CURRENT_FUNCTION);
+  } else if (sst_SSTstandard) {
+    SSTParsedOptions.version = SST_OPTIONS::SST_standard;
+  } else if (sst_SSTs) {
+    SSTParsedOptions.version = SST_OPTIONS::SST_s;
+  } else if (sst_SSTe) {
+    SSTParsedOptions.version = SST_OPTIONS::SST_e;
   }
 
   // Parse production modifications
@@ -1105,6 +1129,9 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
 
   SSTParsedOptions.sust = sst_sust;
   SSTParsedOptions.modified = sst_m;
+  SSTParsedOptions.SSTstandard = sst_SSTstandard;
+  SSTParsedOptions.SSTs = sst_SSTs;
+  SSTParsedOptions.SSTe = sst_SSTe;
   SSTParsedOptions.uq = sst_uq;
   SSTParsedOptions.compWilcox = sst_compWilcox;
   SSTParsedOptions.compWilcoxSE = sst_compWilcoxSE;
