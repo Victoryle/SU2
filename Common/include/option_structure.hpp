@@ -1029,6 +1029,7 @@ static const MapType<std::string, SST_OPTIONS> SST_Options_Map = {
 struct SST_ParsedOptions {
   SST_OPTIONS version = SST_OPTIONS::V1994;   /*!< \brief Enum SST base model. */
   SST_OPTIONS production = SST_OPTIONS::NONE; /*!< \brief Enum for production corrections/modifiers for SST model. */
+  SST_OPTIONS type = SST_OPTIONS::NONE;
   bool SSTstandard = false;                      /*!< \brief Bool for SSTstandard model. */
   bool SSTs = false;                      /*!< \brief Bool for SSTs model. */
   bool SSTe = false;                      /*!< \brief Bool for SSTe model. */
@@ -1096,11 +1097,11 @@ inline SST_ParsedOptions ParseSSTOptions(const SST_OPTIONS *SST_Options, unsigne
   if ((int(sst_SSTstandard) + int(sst_SSTs) + int(sst_SSTe)) > 1) {
     SU2_MPI::Error("Please select only one SST type, default SSTm", CURRENT_FUNCTION);
   } else if (sst_SSTstandard) {
-    SSTParsedOptions.version = SST_OPTIONS::SST_standard;
+    SSTParsedOptions.type = SST_OPTIONS::SST_standard;
   } else if (sst_SSTs) {
-    SSTParsedOptions.version = SST_OPTIONS::SST_s;
+    SSTParsedOptions.type = SST_OPTIONS::SST_s;
   } else if (sst_SSTe) {
-    SSTParsedOptions.version = SST_OPTIONS::SST_e;
+    SSTParsedOptions.type = SST_OPTIONS::SST_e;
   }
 
   // Parse production modifications

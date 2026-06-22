@@ -889,13 +889,13 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       su2double P = Eddy_Viscosity_i * pow(P_Base, 2);
 
       if (sstParsedOptions.version == SST_OPTIONS::V1994) {
-        if (sstParsedOptions.version == SST_OPTIONS::SST_standard or sstParsedOptions.version == SST_OPTIONS::SST_e) {
+        if (sstParsedOptions.type == SST_OPTIONS::SST_standard or sstParsedOptions.type == SST_OPTIONS::SST_e) {
           P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
         }
       }
 
       if (sstParsedOptions.version == SST_OPTIONS::V2003) {
-        if (sstParsedOptions.version == SST_OPTIONS::SST_standard or sstParsedOptions.version == SST_OPTIONS::SST_e) {
+        if (sstParsedOptions.type == SST_OPTIONS::SST_standard or sstParsedOptions.type == SST_OPTIONS::SST_e) {
           P -= 2.0 / 3.0 * (Eddy_Viscosity_i * pow(diverg, 2) + Density_i * ScalarVar_i[0] * diverg); // v1994 SST-standard, e // v1994 SST-m, s : P = Mut * S^2
         }
       }
@@ -964,7 +964,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Implicit part ---*/
 
       Jacobian_i[0][0] = -beta_star * ScalarVar_i[1] * Volume * (1.0 + zetaFMt);
-      if (sstParsedOptions.version == SST_OPTIONS::SST_standard or sstParsedOptions.version == SST_OPTIONS::SST_e) {
+      if (sstParsedOptions.type == SST_OPTIONS::SST_standard or sstParsedOptions.type == SST_OPTIONS::SST_e) {
         Jacobian_i[0][0] -= 2.0 / 3.0 * diverg * Volume * (1.0 + zetaFMt);
       }
       Jacobian_i[0][1] = -beta_star * ScalarVar_i[0] * Volume * (1.0 + zetaFMt);
