@@ -3544,10 +3544,10 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
     /*--- Check if problem is 2D and LM2015 has been selected ---*/
     if (lmParsedOptions.LM2015 && val_nDim == 2) {
       SU2_MPI::Error("LM2015 is available only for 3D problems", CURRENT_FUNCTION);
-    } else if (Kind_Trans_Model == TURB_TRANS_MODEL::AFT) {
+    } 
+  } else if (Kind_Trans_Model == TURB_TRANS_MODEL::AFT) {
     aftParsedOptions = ParseAFTOptions(AFT_Options, nAFT_Options);
     }
-  }
 
   /*--- Set the boolean Wall_Functions equal to true if there is a
    definition for the wall founctions ---*/
