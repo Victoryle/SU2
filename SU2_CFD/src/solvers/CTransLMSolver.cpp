@@ -262,7 +262,7 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
       const su2double p_inf = config->GetPressure_FreeStream();
       const su2double velU_inf = config->GetVelocity_FreeStream()[0];
       const su2double velV_inf = config->GetVelocity_FreeStream()[1];
-      const su2double velW_inf = (nDim == 3) ? config->GetVelocity_FreeStream()[3] : 0.0;
+      const su2double velW_inf = (nDim == 3) ? config->GetVelocity_FreeStream()[2] : 0.0;
       const su2double velMag_inf = pow(velU_inf * velU_inf + velV_inf * velV_inf + velW_inf * velW_inf, 0.5);
       const su2double gamma_Spec = config->GetGamma();
       const su2double p = flowNodes->GetPressure(iPoint);
