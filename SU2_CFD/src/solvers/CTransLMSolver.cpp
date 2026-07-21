@@ -289,7 +289,6 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
       su2double T_eL = 0.0;
       su2double M_eL = 0.0;
       su2double He = 0.0;
-      su2double VorticityMag = 0.0;
 
       rho_eL = pow(rho_inf, gamma_Spec) * p / p_inf;
       rho_eL = pow(rho_eL, 1 / gamma_Spec);
@@ -311,8 +310,8 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
       su2double F_onset_cf = 0.0;
       su2double StreamwiseVort = 0.0;
 
-      if(nDim = 2) {
-        VorticityMag = sqrt(flowNodes->GetVorticity(iPoint)[0] * flowNodes->GetVorticity(iPoint)[0] + flowNodes->GetVorticity(iPoint)[1] * flowNodes->GetVorticity(iPoint)[1]);
+      if(nDim == 2) {
+        He = 0.0;
       }
       else {
         su2double VelocityNormalized[3];
@@ -323,21 +322,7 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
           StreamwiseVort += VelocityNormalized[iDim] * flowNodes->GetVorticity(iPoint)[iDim];
         }
         StreamwiseVort = abs(StreamwiseVort);
-        
-        const su2double unitU =  vel_u / VelocityMag;
-        const su2double unitV =  vel_v / VelocityMag;
-        const su2double unitW =  vel_w / VelocityMag;
-
-        const su2double vorticity_x = flowNodes->GetVorticity(iPoint)[0];
-        const su2double vorticity_y = flowNodes->GetVorticity(iPoint)[1];
-        const su2double vorticity_z = flowNodes->GetVorticity(iPoint)[2];
-
-        const su2double UVor_x = unitU * vorticity_x;
-        const su2double VVor_y = unitV * vorticity_y;
-        const su2double WVor_z = unitW * vorticity_z;
-
-        VorticityMag = (vorticity_x * vorticity_x + vorticity_y * vorticity_y + vorticity_z * vorticity_z);
-        He = pow(UVor_x * UVor_x + VVor_y * VVor_y + WVor_z * WVor_z, 0.5);
+        He = StreamwiseVort;
       }
 
       su2double a1 = + 1.882e-4 * M_eL * M_eL * M_eL + 4.544e-3 * M_eL * M_eL - 1.954e-1 * M_eL + 1.748;

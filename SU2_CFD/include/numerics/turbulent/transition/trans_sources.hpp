@@ -201,33 +201,17 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         He = 0.0;
       }
       else {
-        /*
         su2double VelocityNormalized[3];
         VelocityNormalized[0] = vel_u / Velocity_Mag;
         VelocityNormalized[1] = vel_v / Velocity_Mag;
-        if (nDim == 3) VelocityNormalized[2] = vel_w / Velocity_Mag;
+        VelocityNormalized[2] = vel_w / Velocity_Mag;
 
         su2double StreamwiseVort = 0.0;
         for (auto iDim =0u; iDim < nDim; iDim++) {
           StreamwiseVort += VelocityNormalized[iDim] * Vorticity_i[iDim];
         }
         StreamwiseVort = abs(StreamwiseVort);
-        He = StreamwiseVort
-        */
-
-        const su2double unitU = V_i[idx.Velocity()] / Velocity_Mag;
-        const su2double unitV = V_i[idx.Velocity() + 1] / Velocity_Mag;
-        const su2double unitW = V_i[idx.Velocity() + 2] / Velocity_Mag;
-
-        const su2double vorticity_x = Vorticity_i[0];
-        const su2double vorticity_y = Vorticity_i[1];
-        const su2double vorticity_z = Vorticity_i[2];
-
-        const su2double UVor_x = unitU * vorticity_x;
-        const su2double VVor_y = unitV * vorticity_y;
-        const su2double WVor_z = unitW * vorticity_z;
-        
-        He = pow(UVor_x * UVor_x + VVor_y * VVor_y + WVor_z * WVor_z, 0.5);
+        He = StreamwiseVort;
       }
       
       su2double delH_cf = 0.0;
