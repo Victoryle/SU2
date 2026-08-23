@@ -323,7 +323,6 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
         }
         StreamwiseVort = abs(StreamwiseVort);
         He = StreamwiseVort;
-        He = 0.0;
       }
 
       su2double a1 = + 1.882e-4 * M_eL * M_eL * M_eL + 4.544e-3 * M_eL * M_eL - 1.954e-1 * M_eL + 1.748;

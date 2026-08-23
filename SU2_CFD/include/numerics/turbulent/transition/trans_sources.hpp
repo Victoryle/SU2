@@ -212,7 +212,6 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         }
         StreamwiseVort = abs(StreamwiseVort);
         He = StreamwiseVort;
-        He = 0.0;
       }
       
       su2double delH_cf = 0.0;
