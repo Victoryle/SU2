@@ -222,6 +222,7 @@ class CSourcePieceWise_TransLM final : public CNumerics {
 
       su2double F_ratio = a1 * pow(T_eL / Twall, a2) + a3;
 
+      /*
       if (nDim == 2) {
         He = 0.0;
       }
@@ -238,6 +239,18 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         StreamwiseVort = abs(StreamwiseVort);
         He = StreamwiseVort;
       }
+      */
+
+      su2double VelocityNormalized[3];
+      VelocityNormalized[0] = vel_u / Velocity_Mag;
+      VelocityNormalized[1] = vel_v / Velocity_Mag;
+      VelocityNormalized[2] = (nDim == 3) ? vel_w / Velocity_Mag : 0.0;
+      su2double StreamwiseVort = 0.0;
+      for (auto iDim =0u; iDim < nDim; iDim++) {
+        StreamwiseVort += VelocityNormalized[iDim] * Vorticity_i[iDim];
+      }
+      StreamwiseVort = abs(StreamwiseVort);
+      He = StreamwiseVort;
       
       su2double delH_cf = 0.0;
       su2double H_cf = 0.0;

@@ -310,6 +310,7 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
       su2double F_onset_cf = 0.0;
       su2double StreamwiseVort = 0.0;
 
+      /*
       if(nDim == 2) {
         He = 0.0;
       }
@@ -324,6 +325,16 @@ void CTransLMSolver::Postprocessing(CGeometry *geometry, CSolver **solver_contai
         StreamwiseVort = abs(StreamwiseVort);
         He = StreamwiseVort;
       }
+      */
+      su2double VelocityNormalized[3];
+      VelocityNormalized[0] = vel_u / VelocityMag;
+      VelocityNormalized[1] = vel_v / VelocityMag;
+      VelocityNormalized[2] = (nDim == 3) ? vel_w / VelocityMag : 0.0;
+      for (auto iDim =0u; iDim < nDim; iDim++) {
+        StreamwiseVort += VelocityNormalized[iDim] * flowNodes->GetVorticity(iPoint)[iDim];
+      }
+      StreamwiseVort = abs(StreamwiseVort);
+      He = StreamwiseVort;
 
       su2double a1 = + 1.882e-4 * M_eL * M_eL * M_eL + 4.544e-3 * M_eL * M_eL - 1.954e-1 * M_eL + 1.748;
       su2double a2 = + 1.667e-4 * M_eL * M_eL * M_eL - 2.171e-3 * M_eL * M_eL - 2.937e-2 * M_eL - 0.5902;
