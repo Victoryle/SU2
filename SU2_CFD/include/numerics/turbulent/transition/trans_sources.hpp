@@ -335,11 +335,13 @@ class CSourcePieceWise_TransLM final : public CNumerics {
         su2double theta = Corr_Ret * Laminar_Viscosity_i / Density_i / Velocity_Mag;
         lambda = Density_i * theta * theta / Laminar_Viscosity_i * du_ds;
         
+        lambda = min(max(-0.1, lambda), 0.1);
+
         if (options.LMFAN) {
           lambda = lambda * (1.0 + (gamma_Spec - 1.0) / 2.0 * Ma_eL * Ma_eL);
         }
 
-        lambda = min(max(-0.1, lambda), 0.1);
+        // lambda = min(max(-0.1, lambda), 0.1);
 
         if (lambda <= 0.0) {
           f_lambda = 1. - (-12.986 * lambda - 123.66 * lambda * lambda - 405.689 * lambda * lambda * lambda) *
@@ -354,13 +356,15 @@ class CSourcePieceWise_TransLM final : public CNumerics {
           Corr_Ret = 331.5 * f_lambda * pow(Tu - 0.5658, -0.671);
         }
 
+        Corr_Ret = max(Corr_Ret, Corr_Ret_lim);
+
         if (options.LMFAN) {
           su2double fMa_eL = -83.16 * pow(Ma_eL, -4.095) + 1.509;
           fMa_eL = max(fMa_eL, 0.1);
           Corr_Ret = Corr_Ret / fMa_eL;
         }
 
-        Corr_Ret = max(Corr_Ret, Corr_Ret_lim);
+        // Corr_Ret = max(Corr_Ret, Corr_Ret_lim);
 
         Retheta_Error = fabs(Retheta_old - Corr_Ret) / Retheta_old;
 
