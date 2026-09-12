@@ -1707,6 +1707,18 @@ public:
   inline virtual void SetIntermittencyEff(unsigned long iPoint, su2double val_Intermittency_eff) {}
 
   /*!
+   * \brief Get the value of the effective intermittency.
+   * \return the value of the effective intermittency.
+   */
+  inline virtual su2double GetIntermittencyAlgeEff(unsigned long iPoint) const { return 0.0; }
+
+  /*!
+   * \brief Set the effective intermittency (gamma_eff).
+   * \param[in] Value of the effective intermittency (gamma_eff).
+   */
+  inline virtual void SetIntermittencyAlgeEff(unsigned long iPoint, su2double val_Intermittency_alge_eff) {}
+
+  /*!
    * \brief Set the Wonder value for LM transition model
    * \param[in] val_iPoint - Value of the iPoint.
    * \param[in] tempVar1 - temp variable.

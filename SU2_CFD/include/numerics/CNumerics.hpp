@@ -81,6 +81,7 @@ protected:
   turb_ke_j;  /*!< \brief Turbulent kinetic energy at point j. */
   su2double
   intermittency_eff_i, /*!< \brief effective intermittency at point i. */
+  intermittency_alge_eff_i, /*!< \brief effective intermittency at point i. */
   intermittency_i; /*!< \brief intermittency at point i. */
   su2double
   Pressure_i,  /*!< \brief Pressure at point i. */
@@ -716,6 +717,14 @@ public:
   }
 
   /*!
+   * \brief Set the value of the effective intermittency for the LM model.
+   * \param[in] intermittency_alge_eff_i - Value of the effective intermittency at point i.
+   */
+  void SetIntermittencyAlgeEff(su2double val_intermittency_alge_eff_i) {
+    intermittency_alge_eff_i = val_intermittency_alge_eff_i;
+  }
+
+  /*!
    * \brief Set the value of the intermittency for the LM model.
    * \param[in] intermittency_i - Value of the intermittency at point i.
    */
@@ -728,6 +737,12 @@ public:
    * \param[in] intermittency_eff_i - Value of the effective intermittency at point i.
    */
   su2double GetIntermittencyEff() const { return intermittency_eff_i; }
+
+  /*!
+   * \brief Get the value of the effective intermittency for the transition model.
+   * \param[in] intermittency_alge_eff_i - Value of the effective intermittency at point i.
+   */
+  su2double GetIntermittencyAlgeEff() const { return intermittency_alge_eff_i; }
 
   /*!
    * \brief Set the gradient of the auxiliary variables.

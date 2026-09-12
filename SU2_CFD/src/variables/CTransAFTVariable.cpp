@@ -1,8 +1,7 @@
 /*!
- * \file trans_convection.hpp
- * \brief Delarations of numerics classes for discretization of
- *        convective fluxes in transition problems.
- * \author S. Kang
+ * \file CTransLMVariable.cpp
+ * \brief Definition of the solution fields.
+ * \author A. Aranake, S. Kang
  * \version 8.2.0 "Harrier"
  *
  * SU2 Project Website: https://su2code.github.io
@@ -26,23 +25,28 @@
  * License along with SU2. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
 
-#include "../turb_convection.hpp"
+#include "../../include/variables/CTransAFTVariable.hpp"
 
-/*!
- * \class CUpwSca_TransLM
- * \brief Re-use the SST convective fluxes for the scalar upwind discretization of LM transition model equations.
- * \ingroup ConvDiscr
- */
-template <class FlowIndices>
-using CUpwSca_TransLM  = CUpwSca_TurbSST<FlowIndices>;
+CTransAFTVariable::CTransAFTVariable(su2double AF1, su2double AF2, su2double gammaAlgeEff, unsigned long npoint, unsigned long ndim, unsigned long nvar, CConfig *config)
+  : CTurbVariable(npoint, ndim, nvar, config) {
 
-/*!
- * \class CUpwSca_TransAFT
- * \brief Re-use the SST convective fluxes for the scalar upwind discretization of AFT transition model equations.
- * \ingroup ConvDiscr
- */
-template <class FlowIndices>
-using CUpwSca_TransAFT  = CUpwSca_TurbSST<FlowIndices>;
+  for(unsigned long iPoint=0; iPoint<nPoint; ++iPoint)
+  {
+    Solution(iPoint,0) = AF1;
+    Solution(iPoint,1) = AF2;
+  }
 
+  Solution_Old = Solution;
+
+  /*--- Setting CTransLMVariable of intermittency_Eff---*/
+  Intermittency_Alge_Eff.resize(nPoint) = gammaAlgeEff;
+
+}
+
+void CTransAFTVariable::SetIntermittencyAlgeEff(unsigned long iPoint, su2double val_Intermittency_Alge_Eff) {
+
+  /*--- Effective intermittency ---*/
+  Intermittency_Alge_Eff(iPoint) = val_Intermittency_Alge_Eff;
+
+}

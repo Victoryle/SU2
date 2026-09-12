@@ -813,6 +813,11 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       eff_intermittency = intermittency_eff_i;
     }
 
+    if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+      AD::SetPreaccIn(intermittency_alge_eff_i);
+      eff_intermittency = intermittency_alge_eff_i;
+    }
+
     if (dist_i > 1e-10) {
 
       su2double diverg = 0.0;
@@ -941,6 +946,12 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM) {
         pk = pk * eff_intermittency;
         dk = min(max(eff_intermittency, 0.1), 1.0) * dk;
+      }
+
+      if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+        su2double f_lim = exp(1 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
+        pk = pk * eff_intermittency;
+        dk = (f_lim * min(max(eff_intermittency, 0.1), 1.0) + (1.0 - f_lim) * 1.0 ) * dk;
       }
 
       /*--- Add the production terms to the residuals. ---*/

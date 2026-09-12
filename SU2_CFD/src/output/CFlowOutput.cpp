@@ -984,6 +984,13 @@ void CFlowOutput::AddHistoryOutputFields_ScalarRMS_RES(const CConfig* config) {
       AddHistoryOutput("RMS_RE_THETA_T", "rms[LM_2]",  ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of momentum thickness Reynolds number (LM model).", HistoryFieldType::RESIDUAL);
       break;
 
+    case TURB_TRANS_MODEL::AFT:
+      /// DESCRIPTION: Root-mean square residual of the intermittency (LM model).
+      AddHistoryOutput("RMS_AF1", "rms[AFT_1]",  ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of amplification factor1 (AFT model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Root-mean square residual of natural logarithm intermittency (AFT model).
+      AddHistoryOutput("RMS_AF2", "rms[AFT_2]",  ScreenOutputFormat::FIXED, "RMS_RES", "Root-mean square residual of amplification factor2 (AFT model).", HistoryFieldType::RESIDUAL);
+      break;
+
     case TURB_TRANS_MODEL::NONE: break;
   }
 
@@ -1041,6 +1048,13 @@ void CFlowOutput::AddHistoryOutputFields_ScalarMAX_RES(const CConfig* config) {
       AddHistoryOutput("MAX_RE_THETA_T", "max[LM_2]",  ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of the momentum thickness Reynolds number (LM model).", HistoryFieldType::RESIDUAL);
       break;
 
+    case TURB_TRANS_MODEL::AFT:
+      /// DESCRIPTION: Maximum residual of the amplification factor (AFT model).
+      AddHistoryOutput("MAX_AF1", "max[AFT_1]",  ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of the amplification factor1 (AFT model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Maximum residual of the natural logarithm intermittency (AFT model).
+      AddHistoryOutput("MAX_AF2", "max[AFT_2]",  ScreenOutputFormat::FIXED, "MAX_RES", "Maximum residual of the amplification factor2 (AFT model).", HistoryFieldType::RESIDUAL);
+      break;
+
     case TURB_TRANS_MODEL::NONE:
       break;
   }
@@ -1096,6 +1110,13 @@ void CFlowOutput::AddHistoryOutputFields_ScalarBGS_RES(const CConfig* config) {
       AddHistoryOutput("BGS_INTERMITTENCY", "bgs[LM_1]", ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the intermittency (LM model).", HistoryFieldType::RESIDUAL);
       /// DESCRIPTION: Maximum residual of the momentum thickness Reynolds number (LM model).
       AddHistoryOutput("BGS_RE_THETA_T", "bgs[LM_2]",  ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the momentum thickness Reynolds number (LM model).", HistoryFieldType::RESIDUAL);
+      break;
+
+    case TURB_TRANS_MODEL::AFT:
+      /// DESCRIPTION: Maximum residual of amplification factor (AFT model).
+      AddHistoryOutput("BGS_AF1", "bgs[AFT_1]", ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the amplification factor1 (AFT model).", HistoryFieldType::RESIDUAL);
+      /// DESCRIPTION: Maximum residual of the natural logarithm intermittency (AFT model).
+      AddHistoryOutput("BGS_AF2", "bgs[AFT_2]", ScreenOutputFormat::FIXED, "BGS_RES", "BGS residual of the amplification factor2 (AFT model).", HistoryFieldType::RESIDUAL);
       break;
 
     case TURB_TRANS_MODEL::NONE: break;
@@ -1198,6 +1219,19 @@ void CFlowOutput::LoadHistoryDataScalar(const CConfig* config, const CSolver* co
       SetHistoryOutputValue("LINSOL_RESIDUAL_TRANS", log10(solver[TRANS_SOL]->GetResLinSolver()));
       break;
 
+    case TURB_TRANS_MODEL::AFT:
+      SetHistoryOutputValue("RMS_AF1", log10(solver[TRANS_SOL]->GetRes_RMS(0)));
+      SetHistoryOutputValue("RMS_AF2",log10(solver[TRANS_SOL]->GetRes_RMS(1)));
+      SetHistoryOutputValue("MAX_AF1", log10(solver[TRANS_SOL]->GetRes_Max(0)));
+      SetHistoryOutputValue("MAX_AF2", log10(solver[TRANS_SOL]->GetRes_Max(1)));
+      if (multiZone) {
+        SetHistoryOutputValue("BGS_AF1", log10(solver[TRANS_SOL]->GetRes_BGS(0)));
+        SetHistoryOutputValue("BGS_AF2", log10(solver[TRANS_SOL]->GetRes_BGS(1)));
+      }
+      SetHistoryOutputValue("LINSOL_ITER_TRANS", solver[TRANS_SOL]->GetIterLinSolver());
+      SetHistoryOutputValue("LINSOL_RESIDUAL_TRANS", log10(solver[TRANS_SOL]->GetResLinSolver()));
+      break;
+
     case TURB_TRANS_MODEL::NONE: break;
   }
 
@@ -1266,6 +1300,11 @@ void CFlowOutput::SetVolumeOutputFieldsScalarSolution(const CConfig* config){
     case TURB_TRANS_MODEL::LM:
       AddVolumeOutput("INTERMITTENCY", "LM_gamma", "SOLUTION", "LM intermittency");
       AddVolumeOutput("RE_THETA_T", "LM_Re_t", "SOLUTION", "LM RE_THETA_T");
+      break;
+
+    case TURB_TRANS_MODEL::AFT:
+      AddVolumeOutput("AF1", "AFT_AF1", "SOLUTION", "AFT_AF1");
+      AddVolumeOutput("AF2", "AFT_AF2", "SOLUTION", "AFT_AF2");
       break;
 
     case TURB_TRANS_MODEL::NONE:
@@ -1342,6 +1381,11 @@ void CFlowOutput::SetVolumeOutputFieldsScalarResidual(const CConfig* config) {
     case TURB_TRANS_MODEL::LM:
       AddVolumeOutput("RES_INTERMITTENCY", "Residual_LM_intermittency", "RESIDUAL", "Residual of LM intermittency");
       AddVolumeOutput("RES_RE_THETA_T", "Residual_LM_RE_THETA_T", "RESIDUAL", "Residual of LM RE_THETA_T");
+      break;
+
+    case TURB_TRANS_MODEL::AFT:
+      AddVolumeOutput("RES_AF1", "Residual_AFT_AF1", "RESIDUAL", "Residual of AFT amplification factor1");
+      AddVolumeOutput("RES_AF2", "Residual_AFT_AF2", "RESIDUAL", "Residual of AFT amplification factor2");
       break;
 
     case TURB_TRANS_MODEL::NONE:
@@ -1426,6 +1470,12 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
         AddVolumeOutput("F_onset_cf", "F_onset_cf", "PRIMITIVE", "F_onset_cf");
         AddVolumeOutput("F_onset", "F_onset", "PRIMITIVE", "F_onset");
       }
+      break;
+
+    case TURB_TRANS_MODEL::AFT:
+      //nodes -> SetAFT_Wonder_Func(iPoint, HL, H12, dNdRet, Ret0, D_H12, l_H12, m_H12, kv, Rev, Rev0, F_growth, F_crit, PAF, Pg, HL_Grad);
+      AddVolumeOutput("INTERMITTENCY_ALGE_EFF", "AFT_gamma_alge_eff", "PRIMITIVE", "intermittency_alge_eff");
+      
       break;
 
     case TURB_TRANS_MODEL::NONE:
@@ -1600,6 +1650,12 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
         
       break;
       }
+    case TURB_TRANS_MODEL::AFT:
+      SetVolumeOutputValue("AF1", iPoint, Node_Trans->GetSolution(iPoint, 0));
+      SetVolumeOutputValue("AF2", iPoint, Node_Trans->GetSolution(iPoint, 1));
+      SetVolumeOutputValue("INTERMITTENCY_ALGE_EFF", iPoint, Node_Trans->GetIntermittencyAlgeEff(iPoint));
+
+      break;
 
     case TURB_TRANS_MODEL::NONE: break;
   }
@@ -2711,6 +2767,13 @@ void CFlowOutput::WriteForcesBreakdown(const CConfig* config, const CSolver* flo
             file << " w/ cross-flow corrections (2015)\n";
           } else {
             file << " (2009)\n";
+          }
+          break;
+
+        case TURB_TRANS_MODEL::AFT:
+          file << "Liu's Amplification Factor Tranport model";
+          if (config->GetAFTParsedOptions().version == AFT_OPTIONS::Liu2026 ) {
+            file << " : SST-Liu2026\n";
           }
           break;
         }

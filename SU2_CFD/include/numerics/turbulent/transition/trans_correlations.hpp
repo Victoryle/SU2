@@ -190,3 +190,26 @@ class TransLMCorrelations {
     return F_length1;
   }
 };
+
+/*!
+ * \class TransAFTCorrelations
+ * \brief Class for AFT model's correlation functions.
+ * \ingroup SourceDiscr
+ * \author W. Lee.
+ */
+class TransAFTCorrelations {
+ private:
+
+  AFT_ParsedOptions options;
+
+ public:
+
+  /*!
+   * \brief Set AFT options.
+   * \param[in] val_options - AFT options structure.
+   */
+  void SetOptions(const AFT_ParsedOptions val_options){
+    options = val_options;
+  }
+
+};

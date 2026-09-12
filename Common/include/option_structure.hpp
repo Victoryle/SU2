@@ -1248,10 +1248,12 @@ inline SA_ParsedOptions ParseSAOptions(const SA_OPTIONS *SA_Options, unsigned sh
 enum class TURB_TRANS_MODEL {
   NONE,  /*!< \brief No transition model. */
   LM,    /*!< \brief Kind of transition model (Langtry-Menter (LM) for SST and Spalart-Allmaras). */
+  AFT,   /*!< \brief Kind of transition model (Amplification Factor Transport model for SST). */
 };
 static const MapType<std::string, TURB_TRANS_MODEL> Trans_Model_Map = {
   MakePair("NONE", TURB_TRANS_MODEL::NONE)
   MakePair("LM", TURB_TRANS_MODEL::LM)
+  MakePair("AFT", TURB_TRANS_MODEL::AFT)
 };
 
 /*!
@@ -1370,6 +1372,58 @@ inline LM_ParsedOptions ParseLMOptions(const LM_OPTIONS *LM_Options, unsigned sh
   }
 
   return LMParsedOptions;
+}
+
+/*!
+ * \brief AFT Options
+ */
+enum class AFT_OPTIONS {
+  NONE,         /*!< \brief No option / default. */
+  Liu2026      /*!< \brief 2026 Liu SST-Nc-Ncf model. */
+};
+
+static const MapType<std::string, AFT_OPTIONS> AFT_Options_Map = {
+  MakePair("NONE", AFT_OPTIONS::NONE)
+  MakePair("Liu2026", AFT_OPTIONS::Liu2026)
+};
+
+/*!
+ * \brief Types of transition correlations
+ */
+enum class AFT_CORRELATION {
+  NONE,         /*!< \brief No option / default. */
+  Liu2026      /*!< \brief Kind of transition correlation model (Liu2026). */
+};
+
+/*!
+ * \brief Structure containing parsed AFT options.
+ */
+struct AFT_ParsedOptions {
+  AFT_OPTIONS version = AFT_OPTIONS::NONE;  /*!< \brief AFT base model. */
+  AFT_CORRELATION Correlation = AFT_CORRELATION::NONE;
+};
+
+/*!
+ * \brief Function to parse AFT options.
+ * \param[in] AFT_Options - Selected AFT option from config.
+ * \param[in] nAFT_Options - Number of options selected.
+ * \return Struct with AFT options.
+ */
+inline AFT_ParsedOptions ParseAFTOptions(const AFT_OPTIONS *AFT_Options, unsigned short nAFT_Options) {
+  AFT_ParsedOptions AFTParsedOptions;
+
+  auto IsPresent = [&](AFT_OPTIONS option) {
+    const auto aft_options_end = AFT_Options + nAFT_Options;
+    return std::find(AFT_Options, aft_options_end, option) != aft_options_end;
+  };
+
+  int NFoundCorrelations = 0;
+  if (IsPresent(AFT_OPTIONS::Liu2026)) {
+    AFTParsedOptions.Correlation = AFT_CORRELATION::Liu2026;
+    AFTParsedOptions.version = AFT_OPTIONS::Liu2026;
+    NFoundCorrelations++;
+  }
+  return AFTParsedOptions;
 }
 
 /*!
