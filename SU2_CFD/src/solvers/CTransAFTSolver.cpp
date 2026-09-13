@@ -261,7 +261,7 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
     const su2double PI_2 = max(mu - 0.5 * muT, 0.0) / (0.2 * mu + muT);
     const su2double PI_3 = 1.0 - exp(- Re_v / 300.0);
 
-    const su2double Alge_gamma_s = min(3.0 * PI_1 * PI_2 * PI_3, 3.0);
+    const su2double Alge_gamma_s = min(3.0 * PI_1 * PI_2 * PI_3 * Alge_gamma, 3.0);
 
     su2double Alge_gamma_Eff = Alge_gamma + Alge_gamma_s;
     nodes -> SetIntermittencyAlgeEff(iPoint, Alge_gamma_Eff);
