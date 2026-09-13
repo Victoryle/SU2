@@ -1473,8 +1473,11 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
       break;
 
     case TURB_TRANS_MODEL::AFT:
-      //nodes -> SetAFT_Wonder_Func(iPoint, HL, H12, dNdRet, Ret0, D_H12, l_H12, m_H12, kv, Rev, Rev0, F_growth, F_crit, PAF, Pg, HL_Grad);
       AddVolumeOutput("INTERMITTENCY_ALGE_EFF", "AFT_gamma_alge_eff", "PRIMITIVE", "intermittency_alge_eff");
+      AddVolumeOutput("AFT_NS", "AFT_Ns", "PRIMITIVE", "AFT streamwise amplification factor");
+      AddVolumeOutput("AFT_F_ONSET_S", "AFT_F_onset_s", "PRIMITIVE", "AFT streamwise onset function");
+      AddVolumeOutput("AFT_F_ONSET_CF", "AFT_F_onset_cf", "PRIMITIVE", "AFT crossflow onset function");
+      AddVolumeOutput("AFT_F_ONSET", "AFT_F_onset", "PRIMITIVE", "AFT combined onset function");
       
       break;
 
@@ -1654,6 +1657,10 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
       SetVolumeOutputValue("AF1", iPoint, Node_Trans->GetSolution(iPoint, 0));
       SetVolumeOutputValue("AF2", iPoint, Node_Trans->GetSolution(iPoint, 1));
       SetVolumeOutputValue("INTERMITTENCY_ALGE_EFF", iPoint, Node_Trans->GetIntermittencyAlgeEff(iPoint));
+      SetVolumeOutputValue("AFT_NS", iPoint, Node_Trans->GetAFT_Wonder_Func_var1(iPoint));
+      SetVolumeOutputValue("AFT_F_ONSET_S", iPoint, Node_Trans->GetAFT_Wonder_Func_var2(iPoint));
+      SetVolumeOutputValue("AFT_F_ONSET_CF", iPoint, Node_Trans->GetAFT_Wonder_Func_var3(iPoint));
+      SetVolumeOutputValue("AFT_F_ONSET", iPoint, Node_Trans->GetAFT_Wonder_Func_var4(iPoint));
 
       break;
 

@@ -39,6 +39,7 @@
 class CTransAFTVariable final : public CTurbVariable {
 protected:
   VectorType Intermittency_Alge_Eff;
+  VectorType TempVar1, TempVar2, TempVar3, TempVar4;
 
 public:
   /*!
@@ -68,5 +69,13 @@ public:
    * \brief Calculate effective intermittency.
    */
   inline su2double GetIntermittencyAlgeEff(unsigned long iPoint) const override { return Intermittency_Alge_Eff(iPoint); }
+
+  void SetAFT_Wonder_Func(unsigned long iPoint, su2double tempVar1, su2double tempVar2,
+                          su2double tempVar3, su2double tempVar4) override;
+
+  inline su2double GetAFT_Wonder_Func_var1(unsigned long iPoint) const override { return TempVar1(iPoint); }
+  inline su2double GetAFT_Wonder_Func_var2(unsigned long iPoint) const override { return TempVar2(iPoint); }
+  inline su2double GetAFT_Wonder_Func_var3(unsigned long iPoint) const override { return TempVar3(iPoint); }
+  inline su2double GetAFT_Wonder_Func_var4(unsigned long iPoint) const override { return TempVar4(iPoint); }
 
 };

@@ -253,6 +253,8 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
 
     const su2double F_onset = max(F_onset_s, F_onset_cf);
 
+    nodes->SetAFT_Wonder_Func(iPoint, Ns, F_onset_s, F_onset_cf, F_onset);
+
     const su2double Alge_gamma = tanh(5.0 * F_onset);
 
     const su2double PI_1 = min(F_onset, 5.0);

@@ -42,6 +42,12 @@ CTransAFTVariable::CTransAFTVariable(su2double AF1, su2double AF2, su2double gam
   /*--- Setting CTransLMVariable of intermittency_Eff---*/
   Intermittency_Alge_Eff.resize(nPoint) = gammaAlgeEff;
 
+  /*--- Setting CTransAFTVariable Wonder values. ---*/
+  TempVar1.resize(nPoint) = 0.0;
+  TempVar2.resize(nPoint) = 0.0;
+  TempVar3.resize(nPoint) = 0.0;
+  TempVar4.resize(nPoint) = 0.0;
+
 }
 
 void CTransAFTVariable::SetIntermittencyAlgeEff(unsigned long iPoint, su2double val_Intermittency_Alge_Eff) {
@@ -49,4 +55,12 @@ void CTransAFTVariable::SetIntermittencyAlgeEff(unsigned long iPoint, su2double 
   /*--- Effective intermittency ---*/
   Intermittency_Alge_Eff(iPoint) = val_Intermittency_Alge_Eff;
 
+}
+
+void CTransAFTVariable::SetAFT_Wonder_Func(unsigned long iPoint, su2double var1, su2double var2,
+                                           su2double var3, su2double var4) {
+  TempVar1(iPoint) = var1;
+  TempVar2(iPoint) = var2;
+  TempVar3(iPoint) = var3;
+  TempVar4(iPoint) = var4;
 }
