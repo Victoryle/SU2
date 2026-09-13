@@ -589,7 +589,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double c_k2 = - 7.960e-3 * Ma_eL * Ma_eL * Ma_eL + 1.095e-1 * Ma_eL * Ma_eL + 2.831e-3 * Ma_eL + 5.209;
       su2double c_k3 = + 3.327e-3 * Ma_eL * Ma_eL * Ma_eL - 4.705e-2 * Ma_eL * Ma_eL + 1.867e-2 * Ma_eL + 4.361e-1;
 
-      const su2double Hk = max(c_k1 * HL * HL + c_k2 * HL + c_k3, 1.0);
+      const su2double Hk = max(c_k1 * HL * HL + c_k2 * HL + c_k3, 1.0000001);
 
       /*--- Cal dN1dRet ---*/
       su2double K_a1 = (+ 0.01277 * Ma_eL * Ma_eL - 0.1271 * Ma_eL + 0.427) / (Ma_eL * Ma_eL - 1.0460 * Ma_eL + 4.900);
@@ -799,7 +799,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       /*--- production term of the amplification factor ---*/
       const su2double P1 = C_1 * Density_i * StrainMag_i * F_growth * F_on1 * dN1dRet;
-      const su2double P2 = C_2 * Density_i * StrainMag_i * F_growth * F_on2 * dN1dRet;
+      const su2double P2 = C_2 * Density_i * StrainMag_i * F_growth * F_on2 * dN2dRet;
 
       const su2double Ps = max(P1, P2);
 
