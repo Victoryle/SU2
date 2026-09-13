@@ -735,8 +735,8 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       /*--- Cal Ns ---*/
       su2double K_c1 = (-1.184 * delta_MeL * delta_MeL + 5.805 * delta_MeL) / ( delta_MeL * delta_MeL - 0.7145 * delta_MeL + 1.768 );
-      su2double K_c2 = -68.95 * exp(-1.26 * delta_MeL) - 0.1142;
-      su2double K_c3 = -8.813 * exp(-0.3315 * delta_MeL) + 2.021;
+      su2double K_c2 = -68.95 * exp(-1.26 * Ma_eL) - 0.1142;
+      su2double K_c3 = -8.813 * exp(-0.3315 * Ma_eL) + 2.021;
 
       const su2double N_modify = K_c1 * exp(K_c2 * H12 * 100.0 / T_eL) + K_c3;
       const su2double f_lim = exp(1.0 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
