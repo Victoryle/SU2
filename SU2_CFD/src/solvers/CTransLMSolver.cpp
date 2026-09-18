@@ -116,7 +116,7 @@ CTransLMSolver::CTransLMSolver(CGeometry *geometry, CConfig *config, unsigned sh
       ReThetaT_Inf = (1173.51-589.428*Intensity+0.2196/(Intensity*Intensity));
     }
     else {
-      ReThetaT_Inf = (1173.51-589.428*Intensity+0.2196/(0.27*0.27));
+      ReThetaT_Inf = (1173.51-589.428*Intensity+0.2196/(0.027*0.027));
     }
   }
   else if(Intensity>1.3) {
