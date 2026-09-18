@@ -940,7 +940,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- LM model coupling with production and dissipation term for k transport equation---*/
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM) {
         pk = pk * eff_intermittency;
-        dk = min(max(eff_intermittency, 0.1), 1.0) * dk;
+        // dk = min(max(eff_intermittency, 0.1), 1.0) * dk;
+        dk = max(eff_intermittency, 0.1) * dk;
       }
 
       /*--- Add the production terms to the residuals. ---*/
