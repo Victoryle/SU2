@@ -468,6 +468,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
   const FlowIndices idx; /*!< \brief Object to manage the access to the flow primitives. */
 
   const AFT_ParsedOptions options;
+  const bool axisymmetric;
 
   /*--- AFT Closure constants ---*/
   const su2double C_1 = 9.5;
@@ -481,6 +482,29 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
   TransAFTCorrelations TransCorrelations;
 
+  /*!
+   * \brief Add contribution from convection and diffusion due to axisymmetric formulation to 2D residual.
+   */
+  void ResidualAxisymmetricConvectionDiffusion() {
+    if (Coord_i[1] < EPS) return;
+
+    const su2double yinv = 1.0 / Coord_i[1];
+    const su2double rhov = Density_i * V_i[idx.Velocity() + 1];
+    const su2double diffusivity = Laminar_Viscosity_i + Eddy_Viscosity_i;
+
+    const su2double cdns_axi = rhov * TransVar_i[0] - diffusivity * TransVar_Grad_i[0][1];
+    const su2double cdncf_axi = rhov * TransVar_i[1] - diffusivity * TransVar_Grad_i[1][1];
+
+    Residual[0] -= yinv * Volume * cdns_axi;
+    Residual[1] -= yinv * Volume * cdncf_axi;
+
+    const su2double velocity_radial = V_i[idx.Velocity() + 1];
+    Jacobian_i[0][0] -= yinv * Volume * velocity_radial;
+    Jacobian_i[0][1] -= 0.0;
+    Jacobian_i[1][0] -= 0.0;
+    Jacobian_i[1][1] -= yinv * Volume * velocity_radial;
+  }
+
  public:
   /*!
    * \brief Constructor of the class.
@@ -489,7 +513,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
    * \param[in] config - Definition of the particular problem.
    */
   CSourcePieceWise_TransAFT(unsigned short val_nDim, unsigned short val_nVar, const CConfig* config)
-      : CNumerics(val_nDim, 2, config), idx(val_nDim, config->GetnSpecies()), options(config->GetAFTParsedOptions()){
+      : CNumerics(val_nDim, 2, config), idx(val_nDim, config->GetnSpecies()), options(config->GetAFTParsedOptions()), axisymmetric(config->GetAxisymmetric()){
     /*--- "Allocate" the Jacobian using the static buffer. ---*/
     Jacobian_i[0] = Jacobian_Buffer;
     Jacobian_i[1] = Jacobian_Buffer + 2;
@@ -524,6 +548,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
     }
 
     AD::SetPreaccIn(Vorticity_i, 3);
+    if (axisymmetric) AD::SetPreaccIn(Coord_i[1]);
 
     su2double VorticityMag =
         sqrt(Vorticity_i[0] * Vorticity_i[0] + Vorticity_i[1] * Vorticity_i[1] + Vorticity_i[2] * Vorticity_i[2]);
@@ -815,6 +840,8 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       Jacobian_i[1][0] = 0.0;
       Jacobian_i[1][1] = 0.0;
     }
+
+    if (axisymmetric) ResidualAxisymmetricConvectionDiffusion();
 
     AD::SetPreaccOut(Residual, nVar);
     AD::EndPreacc();
