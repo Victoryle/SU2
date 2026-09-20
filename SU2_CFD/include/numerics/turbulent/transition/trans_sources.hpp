@@ -834,14 +834,14 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       Residual[0] += Ps * Volume;
       Residual[1] += Pcf * Volume;
 
+      if (axisymmetric) ResidualAxisymmetricConvectionDiffusion();
+
       /*--- Implicit part ---*/
       Jacobian_i[0][0] = 0.0;
       Jacobian_i[0][1] = 0.0;
       Jacobian_i[1][0] = 0.0;
       Jacobian_i[1][1] = 0.0;
     }
-
-    if (axisymmetric) ResidualAxisymmetricConvectionDiffusion();
 
     AD::SetPreaccOut(Residual, nVar);
     AD::EndPreacc();
