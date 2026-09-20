@@ -960,8 +960,12 @@ class CFVMFlowSolverBase : public CSolver {
 
       for (unsigned short iVar = 0; iVar < nVar; iVar++) {
         unsigned long total_index = iPoint*nVar + iVar;
+        const su2double assembled_residual = LinSysRes[total_index];
         LinSysRes[total_index] = - (LinSysRes[total_index] + local_Res_TruncError[iVar]);
         LinSysSol[total_index] = 0.0;
+
+        CheckResidualFiniteBeforeRMS("FLOW_IMPLICIT_RHS", geometry, config, iPoint, iVar,
+                                     assembled_residual, local_Res_TruncError[iVar], LinSysRes[total_index]);
 
         /*--- "Add" residual at (iPoint,iVar) to local residual variables. ---*/
         ResidualReductions_PerThread(iPoint, iVar, LinSysRes[total_index], resRMS, resMax, idxMax);

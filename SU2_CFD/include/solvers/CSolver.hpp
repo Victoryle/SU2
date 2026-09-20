@@ -4354,6 +4354,22 @@ public:
 
 protected:
   /*!
+   * \brief Abort before RMS accumulation when a point residual becomes non-finite.
+   * \param[in] stage - Residual preparation stage.
+   * \param[in] geometry - Geometrical definition of the problem.
+   * \param[in] config - Definition of the particular problem.
+   * \param[in] iPoint - Local point index.
+   * \param[in] iVar - Equation-variable index.
+   * \param[in] assembled_residual - Residual before conversion to the linear-system right-hand side.
+   * \param[in] truncation_error - Multigrid truncation-error contribution, or zero when not applicable.
+   * \param[in] rhs - Final right-hand side passed to the RMS reduction.
+   */
+  void CheckResidualFiniteBeforeRMS(const char* stage, const CGeometry* geometry, const CConfig* config,
+                                    unsigned long iPoint, unsigned short iVar,
+                                    const su2double& assembled_residual, const su2double& truncation_error,
+                                    const su2double& rhs) const;
+
+  /*!
    * \brief Allocate the memory for the verification solution, if necessary.
    * \param[in] nDim   - Number of dimensions of the problem.
    * \param[in] nVar   - Number of variables of the problem.

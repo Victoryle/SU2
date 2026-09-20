@@ -1943,6 +1943,57 @@ void CSolver::AdaptCFLNumber(CGeometry **geometry,
 
 }
 
+void CSolver::CheckResidualFiniteBeforeRMS(const char* stage, const CGeometry* geometry, const CConfig* config,
+                                           unsigned long iPoint, unsigned short iVar,
+                                           const su2double& assembled_residual,
+                                           const su2double& truncation_error,
+                                           const su2double& rhs) const {
+
+  if (std::isfinite(SU2_TYPE::GetValue(assembled_residual)) &&
+      std::isfinite(SU2_TYPE::GetValue(truncation_error)) &&
+      std::isfinite(SU2_TYPE::GetValue(rhs))) return;
+
+  const char* variable = "unknown";
+  if (SolverName == "C.FLOW") {
+    if (iVar == 0) variable = "Density";
+    else if (iVar == 1) variable = "Momentum-X";
+    else if (iVar == 2) variable = "Momentum-Y";
+    else if (nDim == 3 && iVar == 3) variable = "Momentum-Z";
+    else if (iVar == nDim + 1) variable = "Energy";
+  } else if (SolverName == "SST") {
+    if (iVar == 0) variable = "k";
+    else if (iVar == 1) variable = "omega";
+  } else if (SolverName == "AFT model") {
+    if (iVar == 0) variable = "AF1";
+    else if (iVar == 1) variable = "AF2";
+  }
+
+  const auto* coord = geometry->nodes->GetCoord(iPoint);
+  const auto* solver_nodes = GetNodes();
+  std::ostringstream message;
+  message << std::setprecision(17)
+          << "NONFINITE_POINT_RESIDUAL_BEFORE_RMS"
+          << " stage=" << stage
+          << " Solver=" << SolverName
+          << " InnerIter=" << config->GetInnerIter()
+          << " rank=" << SU2_MPI::GetRank()
+          << " local_iPoint=" << iPoint
+          << " PointID=" << geometry->nodes->GetGlobalIndex(iPoint)
+          << " iVar=" << iVar
+          << " variable=" << variable
+          << " x=" << SU2_TYPE::GetValue(coord[0])
+          << " r=" << SU2_TYPE::GetValue(coord[1]);
+  if (nDim == 3) message << " z=" << SU2_TYPE::GetValue(coord[2]);
+  message << " Volume=" << SU2_TYPE::GetValue(geometry->nodes->GetVolume(iPoint))
+          << " PeriodicVolume=" << SU2_TYPE::GetValue(geometry->nodes->GetPeriodicVolume(iPoint))
+          << " DeltaTime=" << SU2_TYPE::GetValue(solver_nodes->GetDelta_Time(iPoint))
+          << " Solution=" << SU2_TYPE::GetValue(solver_nodes->GetSolution(iPoint, iVar))
+          << " AssembledResidual=" << SU2_TYPE::GetValue(assembled_residual)
+          << " TruncationError=" << SU2_TYPE::GetValue(truncation_error)
+          << " RHS=" << SU2_TYPE::GetValue(rhs);
+  SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+}
+
 void CSolver::SetResidual_RMS(const CGeometry *geometry, const CConfig *config) {
 
   if (geometry->GetMGLevel() != MESH_0) return;
@@ -1969,7 +2020,15 @@ void CSolver::SetResidual_RMS(const CGeometry *geometry, const CConfig *config) 
   for (unsigned short iVar = 0; iVar < nVar; iVar++) {
 
     if (std::isnan(SU2_TYPE::GetValue(rbuf_res[iVar]))) {
-      SU2_MPI::Error("SU2 has diverged (NaN detected).", CURRENT_FUNCTION);
+      ostringstream message;
+      message << setprecision(17)
+              << "SU2 has diverged (NaN detected during RMS reduction)."
+              << " Solver=" << SolverName
+              << " InnerIter=" << config->GetInnerIter()
+              << " rank=" << SU2_MPI::GetRank()
+              << " iVar=" << iVar
+              << " residual_sum=" << SU2_TYPE::GetValue(rbuf_res[iVar]);
+      SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
     }
 
     Residual_RMS[iVar] = max(EPS*EPS, sqrt(rbuf_res[iVar]/Global_nPointDomain));
