@@ -25,9 +25,11 @@
  */
 
 #pragma once
+#include <atomic>
 #include <cmath>
 #include <iomanip>
 #include <initializer_list>
+#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -511,6 +513,35 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
     SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
   }
 
+  /*! \brief Report, without aborting, whether a non-finite second-mode value is active in the AFT source. */
+  void ReportSecondModeNonfinite(
+      const CConfig* config, const su2double& F_on2,
+      std::initializer_list<std::pair<const char*, const su2double*> > values) const {
+    bool nonfinite = false;
+    for (const auto& value : values) {
+      nonfinite = nonfinite || !std::isfinite(SU2_TYPE::GetValue(*value.second));
+    }
+    if (!nonfinite) return;
+
+    const bool active = SU2_TYPE::GetValue(F_on2) > 0.5;
+    static std::atomic<bool> reported_inactive{false};
+    static std::atomic<bool> reported_active{false};
+    auto& reported = active ? reported_active : reported_inactive;
+    if (reported.exchange(true)) return;
+
+    std::ostringstream message;
+    message << std::setprecision(17) << "AFT_NONFINITE_SECOND_MODE_OBSERVED_"
+            << (active ? "ACTIVE" : "INACTIVE")
+            << " InnerIter=" << config->GetInnerIter()
+            << " rank=" << SU2_MPI::GetRank()
+            << " x=" << SU2_TYPE::GetValue(Coord_i[0])
+            << " r=" << SU2_TYPE::GetValue(Coord_i[1]);
+    for (const auto& value : values) {
+      message << ' ' << value.first << '=' << SU2_TYPE::GetValue(*value.second);
+    }
+    std::cerr << message.str() << std::endl;
+  }
+
   /*!
    * \brief Add contribution from convection and diffusion due to axisymmetric formulation to 2D residual.
    */
@@ -673,11 +704,6 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double K_b4 = (+ 7.421e-4 * delta_MeL * delta_MeL + 6.749e-3 * delta_MeL - 5.148e-2) / (delta_MeL + 3.715e-1); 
       
       const su2double dN2dRet = K_b1 * exp(K_b2 * H12) + K_b3 * exp(K_b4 * H12);
-
-      CheckFinite("SECOND_MODE", config,
-                  {{"Ma_eL", &Ma_eL}, {"H12", &H12}, {"delta_MeL", &delta_MeL},
-                   {"K_b1", &K_b1}, {"K_b2", &K_b2}, {"K_b3", &K_b3},
-                   {"K_b4", &K_b4}, {"dN2dRet", &dN2dRet}});
 
       /*--- Cal Rec1 ---*/
       su2double K_a5 = 1 + (gamma_Spec - 1.0) / 2 * pow(0.72, 0.5) * Ma_eL * Ma_eL;
@@ -896,13 +922,17 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       const su2double Pcf = C_3 * Density_i * StrainMag_i * F_on3 * G_cf * D_cf;
 
-      CheckFinite("SOURCE", config,
-                  {{"rho", &Density_i}, {"S", &StrainMag_i}, {"F_growth", &F_growth},
-                   {"F_on1", &F_on1}, {"F_on2", &F_on2}, {"F_on3", &F_on3},
-                   {"dN1dRet", &dN1dRet}, {"dN2dRet", &dN2dRet},
-                   {"Re_cf", &Re_cf}, {"Re_cf0", &Re_cf0}, {"G_cf", &G_cf},
-                   {"D_cf", &D_cf}, {"P1", &P1}, {"P2", &P2},
-                   {"Ps", &Ps}, {"Pcf", &Pcf}});
+      ReportSecondModeNonfinite(
+          config, F_on2,
+          {{"rho", &Density_i}, {"S", &StrainMag_i}, {"Ma_eL", &Ma_eL},
+           {"H12", &H12}, {"delta_MeL", &delta_MeL}, {"K_b1", &K_b1},
+           {"K_b2", &K_b2}, {"K_b3", &K_b3}, {"K_b4", &K_b4},
+           {"Rev", &Rev}, {"Rec2", &Rec2}, {"Revc2", &Revc2},
+           {"F_on1", &F_on1}, {"F_on2", &F_on2}, {"dN1dRet", &dN1dRet},
+           {"dN2dRet", &dN2dRet}, {"F_growth", &F_growth},
+           {"P1", &P1}, {"P2", &P2}, {"Ps", &Ps}});
+
+      CheckFinite("SOURCE", config, {{"Ps", &Ps}, {"Pcf", &Pcf}});
 
       /*--- Source ---*/
       Residual[0] += Ps * Volume;
