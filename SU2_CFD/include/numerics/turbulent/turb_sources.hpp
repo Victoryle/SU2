@@ -25,6 +25,11 @@
  */
 
 #pragma once
+#include <cmath>
+#include <iomanip>
+#include <initializer_list>
+#include <sstream>
+#include <utility>
 
 #include "../../../../Common/include/toolboxes/geometry_toolbox.hpp"
 #include "../scalar/scalar_sources.hpp"
@@ -662,6 +667,27 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
   su2double* Jacobian_i[2];
   su2double Jacobian_Buffer[4];  /// Static storage for the Jacobian (which needs to be pointer for return type).
 
+  /*! \brief Abort at the first non-finite SST/AFT source intermediate and print its exact local state. */
+  void CheckAFTFinite(const char* stage, const CConfig* config,
+                      std::initializer_list<std::pair<const char*, const su2double*> > values) const {
+    bool nonfinite = false;
+    for (const auto& value : values) {
+      nonfinite = nonfinite || !std::isfinite(SU2_TYPE::GetValue(*value.second));
+    }
+    if (!nonfinite) return;
+
+    std::ostringstream message;
+    message << std::setprecision(17) << "SST_AFT_NONFINITE_" << stage
+            << " InnerIter=" << config->GetInnerIter()
+            << " rank=" << SU2_MPI::GetRank()
+            << " x=" << SU2_TYPE::GetValue(Coord_i[0])
+            << " r=" << SU2_TYPE::GetValue(Coord_i[1]);
+    for (const auto& value : values) {
+      message << ' ' << value.first << '=' << SU2_TYPE::GetValue(*value.second);
+    }
+    SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+  }
+
   /*!
    * \brief Get strain magnitude based on perturbed reynolds stress matrix.
    * \param[in] turb_ke: turbulent kinetic energy of the node.
@@ -949,9 +975,29 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       }
 
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+        const su2double pk_before_AFT = pk;
+        const su2double dk_before_AFT = dk;
         su2double f_lim = exp(1 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
         pk = pk * eff_intermittency;
         dk = (f_lim * min(max(eff_intermittency, 0.1), 1.0) + (1.0 - f_lim) * 1.0 ) * dk;
+
+        CheckAFTFinite("K_SOURCE", config,
+                       {{"rho", &Density_i}, {"mu", &Laminar_Viscosity_i},
+                        {"mu_t", &Eddy_Viscosity_i}, {"dist", &dist_i},
+                        {"S", &StrainMag_i}, {"Omega", &VorticityMag},
+                        {"k", &ScalarVar_i[0]}, {"omega", &ScalarVar_i[1]},
+                        {"gamma_eff", &eff_intermittency}, {"P", &P},
+                        {"prod_limit", &prod_limit}, {"pk_before_AFT", &pk_before_AFT},
+                        {"pk_after_AFT", &pk}, {"f_lim", &f_lim},
+                        {"dk_before_AFT", &dk_before_AFT}, {"dk_after_AFT", &dk}});
+      }
+
+      if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+        CheckAFTFinite("OMEGA_SOURCE", config,
+                       {{"alpha", &alfa_blended}, {"beta", &beta_blended},
+                        {"mu_t", &Eddy_Viscosity_i}, {"P", &P}, {"pk", &pk},
+                        {"pw", &pw}, {"dw", &dw}, {"CDkw", &CDkw_i},
+                        {"F1", &F1_i}, {"F2", &F2_i}});
       }
 
       /*--- Add the production terms to the residuals. ---*/
@@ -967,6 +1013,12 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Cross diffusion ---*/
 
       Residual[1] += (1.0 - F1_i) * CDkw_i * Volume;
+
+      if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+        CheckAFTFinite("RESIDUAL", config,
+                       {{"Volume", &Volume}, {"Residual_k", &Residual[0]},
+                        {"Residual_omega", &Residual[1]}});
+      }
 
       /*--- Contribution due to 2D axisymmetric formulation ---*/
 

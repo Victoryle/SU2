@@ -32,6 +32,12 @@
 #include "../../../Common/include/parallelization/omp_structure.hpp"
 #include "../../../Common/include/toolboxes/geometry_toolbox.hpp"
 
+#include <cmath>
+#include <iomanip>
+#include <initializer_list>
+#include <sstream>
+#include <utility>
+
 /*---  This is the implementation of the Langtry-Menter transition model.
        The main reference for this model is:Langtry, Menter, AIAA J. 47(12) 2009
        DOI: https://doi.org/10.2514/1.42362 ---*/
@@ -183,6 +189,29 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
   SU2_OMP_FOR_STAT(omp_chunk_size)
   for (unsigned long iPoint = 0; iPoint < nPoint; iPoint ++) {
 
+    auto CheckPostFinite = [&](const char* stage,
+                               std::initializer_list<std::pair<const char*, const su2double*> > values) {
+      bool nonfinite = false;
+      for (const auto& value : values) {
+        nonfinite = nonfinite || !std::isfinite(SU2_TYPE::GetValue(*value.second));
+      }
+      if (!nonfinite) return;
+
+      const auto* coord = geometry->nodes->GetCoord(iPoint);
+      std::ostringstream message;
+      message << std::setprecision(17) << "AFT_NONFINITE_POSTPROCESSING_" << stage
+              << " InnerIter=" << config->GetInnerIter()
+              << " rank=" << SU2_MPI::GetRank()
+              << " local_iPoint=" << iPoint
+              << " PointID=" << geometry->nodes->GetGlobalIndex(iPoint)
+              << " x=" << SU2_TYPE::GetValue(coord[0])
+              << " r=" << SU2_TYPE::GetValue(coord[1]);
+      for (const auto& value : values) {
+        message << ' ' << value.first << '=' << SU2_TYPE::GetValue(*value.second);
+      }
+      SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+    };
+
     // Here the nodes already have the new solution, thus I have to compute everything from scratch
     const su2double AF1 = nodes->GetSolution(iPoint,0);
     const su2double AF2 = nodes->GetSolution(iPoint,1);
@@ -221,15 +250,27 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
     su2double rho_eL = 0.0, U_eL = 0.0, a_eL = 0.0, T_eL = 0.0, Ma_eL = 0.0;
 
     rho_eL = pow(rho_inf, gamma_Spec) * p / p_inf;
+    const su2double rho_eL_power_argument = rho_eL;
     rho_eL = pow(rho_eL, 1 / gamma_Spec);
     U_eL = gamma_Spec / (gamma_Spec -1.0) * p_inf / rho_inf + 0.5 * velMag_inf * velMag_inf;
     U_eL -= gamma_Spec / (gamma_Spec -1.0) * p / rho_eL;
+    const su2double U_eL_pre_sqrt = U_eL;
     U_eL = pow(U_eL * 2.0, 0.5);
     a_eL = sos_inf * sos_inf / (gamma_Spec -1) + velMag_inf * velMag_inf / 2.0;
     a_eL -= U_eL * U_eL / 2.0;
+    const su2double a_eL_pre_sqrt = a_eL;
     a_eL = pow(a_eL * (gamma_Spec -1), 0.5);
     T_eL = a_eL * a_eL / gamma_Spec / config->GetGas_Constant();
     Ma_eL = U_eL / a_eL;
+
+    CheckPostFinite("LOCAL_EDGE",
+                    {{"rho", &rho}, {"p", &p}, {"mu", &mu}, {"mu_t", &muT},
+                     {"dist", &dist}, {"S", &StrainMag}, {"Omega", &VorticityMag},
+                     {"velocity_mag", &VelocityMag},
+                     {"rho_eL_power_argument", &rho_eL_power_argument}, {"rho_eL", &rho_eL},
+                     {"U_eL_pre_sqrt", &U_eL_pre_sqrt}, {"U_eL", &U_eL},
+                     {"a_eL_pre_sqrt", &a_eL_pre_sqrt}, {"a_eL", &a_eL},
+                     {"T_eL", &T_eL}, {"Ma_eL", &Ma_eL}});
 
     /*--- Cal HL ---*/
     const su2double HL = StrainMag * dist / U_eL;
@@ -264,6 +305,16 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
     const su2double Alge_gamma_s = min(3.0 * PI_1 * PI_2 * PI_3, 3.0);
 
     su2double Alge_gamma_Eff = Alge_gamma + Alge_gamma_s;
+
+    CheckPostFinite("COUPLING",
+                    {{"AF1", &AF1}, {"AF2", &AF2}, {"Re_v", &Re_v},
+                     {"RT", &RT}, {"F_turb", &F_turb}, {"H12", &H12},
+                     {"N_modify", &N_modify}, {"f_lim", &f_lim}, {"Ns", &Ns},
+                     {"F_onset_s", &F_onset_s}, {"F_onset_cf", &F_onset_cf},
+                     {"F_onset", &F_onset}, {"Alge_gamma", &Alge_gamma},
+                     {"PI_1", &PI_1}, {"PI_2", &PI_2}, {"PI_3", &PI_3},
+                     {"Alge_gamma_s", &Alge_gamma_s},
+                     {"Alge_gamma_Eff", &Alge_gamma_Eff}});
     nodes -> SetIntermittencyAlgeEff(iPoint, Alge_gamma_Eff);
 
   }
@@ -346,6 +397,22 @@ void CTransAFTSolver::Source_Residual(CGeometry *geometry, CSolver **solver_cont
     /*--- Compute the source term ---*/
 
     auto residual = numerics->ComputeResidual(config);
+
+    if (!std::isfinite(SU2_TYPE::GetValue(residual[0])) ||
+        !std::isfinite(SU2_TYPE::GetValue(residual[1]))) {
+      const auto* coord = geometry->nodes->GetCoord(iPoint);
+      std::ostringstream message;
+      message << std::setprecision(17) << "AFT_NONFINITE_FINAL_SOURCE_RESIDUAL"
+              << " InnerIter=" << config->GetInnerIter()
+              << " rank=" << SU2_MPI::GetRank()
+              << " local_iPoint=" << iPoint
+              << " PointID=" << geometry->nodes->GetGlobalIndex(iPoint)
+              << " x=" << SU2_TYPE::GetValue(coord[0])
+              << " r=" << SU2_TYPE::GetValue(coord[1])
+              << " Residual_AF1=" << SU2_TYPE::GetValue(residual[0])
+              << " Residual_AF2=" << SU2_TYPE::GetValue(residual[1]);
+      SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+    }
 
     /*--- Subtract residual and the Jacobian ---*/
 

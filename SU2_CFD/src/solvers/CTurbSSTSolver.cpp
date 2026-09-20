@@ -31,6 +31,10 @@
 #include "../../../Common/include/parallelization/omp_structure.hpp"
 #include "../../../Common/include/toolboxes/geometry_toolbox.hpp"
 
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+
 
 CTurbSSTSolver::CTurbSSTSolver(CGeometry *geometry, CConfig *config, unsigned short iMesh)
     : CTurbSolver(geometry, config, true) {
@@ -399,6 +403,23 @@ void CTurbSSTSolver::Source_Residual(CGeometry *geometry, CSolver **solver_conta
     /*--- Compute the source term ---*/
 
     auto residual = numerics->ComputeResidual(config);
+
+    if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT &&
+        (!std::isfinite(SU2_TYPE::GetValue(residual[0])) ||
+         !std::isfinite(SU2_TYPE::GetValue(residual[1])))) {
+      const auto* coord = geometry->nodes->GetCoord(iPoint);
+      std::ostringstream message;
+      message << std::setprecision(17) << "SST_AFT_NONFINITE_FINAL_SOURCE_RESIDUAL"
+              << " InnerIter=" << config->GetInnerIter()
+              << " rank=" << SU2_MPI::GetRank()
+              << " local_iPoint=" << iPoint
+              << " PointID=" << geometry->nodes->GetGlobalIndex(iPoint)
+              << " x=" << SU2_TYPE::GetValue(coord[0])
+              << " r=" << SU2_TYPE::GetValue(coord[1])
+              << " Residual_k=" << SU2_TYPE::GetValue(residual[0])
+              << " Residual_omega=" << SU2_TYPE::GetValue(residual[1]);
+      SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+    }
 
     /*--- Store the intermittency ---*/
 

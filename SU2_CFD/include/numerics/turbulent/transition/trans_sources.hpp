@@ -25,6 +25,12 @@
  */
 
 #pragma once
+#include <cmath>
+#include <iomanip>
+#include <initializer_list>
+#include <sstream>
+#include <utility>
+
 #include "../../../../../Common/include/toolboxes/geometry_toolbox.hpp"
 #include "../../scalar/scalar_sources.hpp"
 #include "./trans_correlations.hpp"
@@ -482,6 +488,29 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
   TransAFTCorrelations TransCorrelations;
 
+  /*! \brief Abort at the first non-finite AFT source intermediate and print its exact local state. */
+  void CheckFinite(const char* stage, const CConfig* config,
+                   std::initializer_list<std::pair<const char*, const su2double*> > values,
+                   int newton_iter = -1) const {
+    bool nonfinite = false;
+    for (const auto& value : values) {
+      nonfinite = nonfinite || !std::isfinite(SU2_TYPE::GetValue(*value.second));
+    }
+    if (!nonfinite) return;
+
+    std::ostringstream message;
+    message << std::setprecision(17) << "AFT_NONFINITE_" << stage
+            << " InnerIter=" << config->GetInnerIter()
+            << " rank=" << SU2_MPI::GetRank();
+    if (newton_iter >= 0) message << " NewtonIter=" << newton_iter;
+    message << " x=" << SU2_TYPE::GetValue(Coord_i[0])
+            << " r=" << SU2_TYPE::GetValue(Coord_i[1]);
+    for (const auto& value : values) {
+      message << ' ' << value.first << '=' << SU2_TYPE::GetValue(*value.second);
+    }
+    SU2_MPI::Error(message.str(), CURRENT_FUNCTION);
+  }
+
   /*!
    * \brief Add contribution from convection and diffusion due to axisymmetric formulation to 2D residual.
    */
@@ -593,15 +622,27 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double rho_eL = 0.0, U_eL = 0.0, a_eL = 0.0, T_eL = 0.0, Ma_eL = 0.0;
 
       rho_eL = pow(rho_inf, gamma_Spec) * p / p_inf;
+      const su2double rho_eL_power_argument = rho_eL;
       rho_eL = pow(rho_eL, 1 / gamma_Spec);
       U_eL = gamma_Spec / (gamma_Spec -1.0) * p_inf / rho_inf + 0.5 * velMag_inf * velMag_inf;
       U_eL -= gamma_Spec / (gamma_Spec -1.0) * p / rho_eL;
+      const su2double U_eL_pre_sqrt = U_eL;
       U_eL = pow(U_eL * 2.0, 0.5);
       a_eL = sos_inf * sos_inf / (gamma_Spec -1) + velMag_inf * velMag_inf / 2.0;
       a_eL -= U_eL * U_eL / 2.0;
+      const su2double a_eL_pre_sqrt = a_eL;
       a_eL = pow(a_eL * (gamma_Spec -1), 0.5);
       T_eL = a_eL * a_eL / gamma_Spec / config->GetGas_Constant();
       Ma_eL = U_eL / a_eL;
+
+      CheckFinite("LOCAL_EDGE", config,
+                  {{"rho", &Density_i}, {"p", &p}, {"mu", &Laminar_Viscosity_i},
+                   {"mu_t", &Eddy_Viscosity_i}, {"dist", &dist_i}, {"S", &StrainMag_i},
+                   {"Omega", &VorticityMag}, {"velocity_mag", &Velocity_Mag},
+                   {"rho_eL_power_argument", &rho_eL_power_argument}, {"rho_eL", &rho_eL},
+                   {"U_eL_pre_sqrt", &U_eL_pre_sqrt}, {"U_eL", &U_eL},
+                   {"a_eL_pre_sqrt", &a_eL_pre_sqrt}, {"a_eL", &a_eL},
+                   {"T_eL", &T_eL}, {"Ma_eL", &Ma_eL}});
 
       /*--- Cal HL ---*/
       const su2double HL = StrainMag_i * dist_i/ U_eL;
@@ -632,6 +673,11 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double K_b4 = (+ 7.421e-4 * delta_MeL * delta_MeL + 6.749e-3 * delta_MeL - 5.148e-2) / (delta_MeL + 3.715e-1); 
       
       const su2double dN2dRet = K_b1 * exp(K_b2 * H12) + K_b3 * exp(K_b4 * H12);
+
+      CheckFinite("SECOND_MODE", config,
+                  {{"Ma_eL", &Ma_eL}, {"H12", &H12}, {"delta_MeL", &delta_MeL},
+                   {"K_b1", &K_b1}, {"K_b2", &K_b2}, {"K_b3", &K_b3},
+                   {"K_b4", &K_b4}, {"dN2dRet", &dN2dRet}});
 
       /*--- Cal Rec1 ---*/
       su2double K_a5 = 1 + (gamma_Spec - 1.0) / 2 * pow(0.72, 0.5) * Ma_eL * Ma_eL;
@@ -668,6 +714,13 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       su2double dUeL_ds = vel_u / Velocity_Mag * dUeL_dx + vel_v / Velocity_Mag * dUeL_dy;
       if (nDim == 3) dUeL_ds += vel_w / Velocity_Mag * dUeL_dz;
+
+      CheckFinite("NEWTON_SETUP", config,
+                  {{"Rev", &Rev}, {"F_ratio_ZPG", &F_ratio_ZPG}, {"theta", &theta},
+                   {"velocity_mag", &Velocity_Mag}, {"U_eL", &U_eL},
+                   {"dp_dx", &dp_dx}, {"dp_dy", &dp_dy}, {"dp_dz", &dp_dz},
+                   {"dUeL_dx", &dUeL_dx}, {"dUeL_dy", &dUeL_dy},
+                   {"dUeL_dz", &dUeL_dz}, {"dUeL_ds", &dUeL_ds}});
 
       su2double theta_old = 0.0;
       su2double lambda = 0.0;
@@ -722,6 +775,13 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
         error_theta = fabs(theta_new - theta_old) / fabs(theta_old);
 
+        CheckFinite("NEWTON", config,
+                    {{"theta_old", &theta_old}, {"lambda_raw", &lambda_raw},
+                     {"lambda", &lambda}, {"F_ratio_PG", &F_ratio_PG},
+                     {"F_ratio_raw", &F_ratio_raw}, {"F_ratio", &F_ratio},
+                     {"F_ratio_prime", &F_ratio_prime}, {"f_theta", &f_theta},
+                     {"f_theta_prime", &f_theta_prime}, {"theta_new", &theta_new}}, iter);
+
         if (error_theta < 0.0000001) {
           break;
         }
@@ -749,6 +809,12 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       /*--- Cal F_growth ---*/
       const su2double F_growth = D_corr * (m_corr + 1.0) / 2.0 * l_corr;
+
+      CheckFinite("GROWTH", config,
+                  {{"S", &StrainMag_i}, {"velocity_mag", &Velocity_Mag},
+                   {"dist", &dist_i}, {"F_ratio", &F_ratio}, {"lambda", &lambda},
+                   {"D_corr", &D_corr}, {"m_corr", &m_corr}, {"H12", &H12},
+                   {"l_corr", &l_corr}, {"F_growth", &F_growth}});
 
       /*--- Cal Revc1, Revc2 ---*/
       const su2double Revc1 = F_ratio * Rec1;
@@ -830,9 +896,21 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
 
       const su2double Pcf = C_3 * Density_i * StrainMag_i * F_on3 * G_cf * D_cf;
 
+      CheckFinite("SOURCE", config,
+                  {{"rho", &Density_i}, {"S", &StrainMag_i}, {"F_growth", &F_growth},
+                   {"F_on1", &F_on1}, {"F_on2", &F_on2}, {"F_on3", &F_on3},
+                   {"dN1dRet", &dN1dRet}, {"dN2dRet", &dN2dRet},
+                   {"Re_cf", &Re_cf}, {"Re_cf0", &Re_cf0}, {"G_cf", &G_cf},
+                   {"D_cf", &D_cf}, {"P1", &P1}, {"P2", &P2},
+                   {"Ps", &Ps}, {"Pcf", &Pcf}});
+
       /*--- Source ---*/
       Residual[0] += Ps * Volume;
       Residual[1] += Pcf * Volume;
+
+      CheckFinite("RESIDUAL", config,
+                  {{"Volume", &Volume}, {"Residual_AF1", &Residual[0]},
+                   {"Residual_AF2", &Residual[1]}});
 
       /*--- Implicit part ---*/
       Jacobian_i[0][0] = 0.0;
