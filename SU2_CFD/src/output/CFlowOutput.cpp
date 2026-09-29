@@ -1478,6 +1478,8 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
       AddVolumeOutput("AFT_F_ONSET_S", "AFT_F_onset_s", "PRIMITIVE", "AFT streamwise onset function");
       AddVolumeOutput("AFT_F_ONSET_CF", "AFT_F_onset_cf", "PRIMITIVE", "AFT crossflow onset function");
       AddVolumeOutput("AFT_F_ONSET", "AFT_F_onset", "PRIMITIVE", "AFT combined onset function");
+      AddVolumeOutput("AFT_N_MODIFY", "AFT_N_modify", "PRIMITIVE", "AFT amplification-factor modification");
+      AddVolumeOutput("AFT_F_LIM", "AFT_f_lim", "PRIMITIVE", "AFT strain-vorticity limiter");
       
       break;
 
@@ -1661,6 +1663,8 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
       SetVolumeOutputValue("AFT_F_ONSET_S", iPoint, Node_Trans->GetAFT_Wonder_Func_var2(iPoint));
       SetVolumeOutputValue("AFT_F_ONSET_CF", iPoint, Node_Trans->GetAFT_Wonder_Func_var3(iPoint));
       SetVolumeOutputValue("AFT_F_ONSET", iPoint, Node_Trans->GetAFT_Wonder_Func_var4(iPoint));
+      SetVolumeOutputValue("AFT_N_MODIFY", iPoint, Node_Trans->GetAFT_Wonder_Func_var5(iPoint));
+      SetVolumeOutputValue("AFT_F_LIM", iPoint, Node_Trans->GetAFT_Wonder_Func_var6(iPoint));
 
       break;
 
