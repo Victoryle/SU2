@@ -950,6 +950,8 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
         su2double f_lim = exp(1 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
+        eff_intermittency = 0.0;
+        f_lim = 0.0;
         pk = pk * eff_intermittency;
         dk = (f_lim * min(max(eff_intermittency, 0.1), 1.0) + (1.0 - f_lim) * 1.0 ) * dk;
       }
