@@ -248,11 +248,8 @@ void CTransAFTSolver::Postprocessing(CGeometry *geometry, CSolver **solver_conta
 
     const su2double Ns = AF1 + N_modify * f_lim;
 
-    // const su2double F_onset_s = max(Ns - Critical_N_Factor * F_turb, 0.0);
-    // const su2double F_onset_cf = max(AF2 - Critical_N_Factor * F_turb, 0.0);
-
-    const su2double F_onset_s = max(Ns - Critical_N_Factor, 0.0);
-    const su2double F_onset_cf = max(AF2 - Critical_N_Factor, 0.0);
+    const su2double F_onset_s = max(Ns - Critical_N_Factor * F_turb, 0.0);
+    const su2double F_onset_cf = max(AF2 - Critical_N_Factor * F_turb, 0.0);
 
     const su2double F_onset = max(F_onset_s, F_onset_cf);
 
