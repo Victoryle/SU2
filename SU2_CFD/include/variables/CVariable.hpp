@@ -1756,7 +1756,8 @@ public:
    */
   inline virtual void SetAFT_Wonder_Func(unsigned long iPoint, su2double tempVar1, su2double tempVar2,
                                          su2double tempVar3, su2double tempVar4, su2double tempVar5,
-                                         su2double tempVar6) {}
+                                         su2double tempVar6, su2double tempVar7, su2double tempVar8,
+                                         su2double tempVar9, su2double tempVar10) {}
 
   /*!
    * \brief Get the Wonder values for the AFT transition model.
@@ -1767,6 +1768,10 @@ public:
   inline virtual su2double GetAFT_Wonder_Func_var4(unsigned long iPoint) const {return 0.0;}
   inline virtual su2double GetAFT_Wonder_Func_var5(unsigned long iPoint) const {return 0.0;}
   inline virtual su2double GetAFT_Wonder_Func_var6(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetAFT_Wonder_Func_var7(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetAFT_Wonder_Func_var8(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetAFT_Wonder_Func_var9(unsigned long iPoint) const {return 0.0;}
+  inline virtual su2double GetAFT_Wonder_Func_var10(unsigned long iPoint) const {return 0.0;}
 
   // /*!
   //  * \brief Set the Wonder value for SST model

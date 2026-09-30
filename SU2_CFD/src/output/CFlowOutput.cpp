@@ -1480,6 +1480,10 @@ void CFlowOutput::SetVolumeOutputFieldsScalarPrimitive(const CConfig* config) {
       AddVolumeOutput("AFT_F_ONSET", "AFT_F_onset", "PRIMITIVE", "AFT combined onset function");
       AddVolumeOutput("AFT_N_MODIFY", "AFT_N_modify", "PRIMITIVE", "AFT amplification-factor modification");
       AddVolumeOutput("AFT_F_LIM", "AFT_f_lim", "PRIMITIVE", "AFT strain-vorticity limiter");
+      AddVolumeOutput("AFT_STRAIN_MAG", "AFT_StrainMag", "PRIMITIVE", "AFT strain-rate magnitude");
+      AddVolumeOutput("AFT_VORTICITY_MAG", "AFT_VorticityMag", "PRIMITIVE", "AFT vorticity magnitude");
+      AddVolumeOutput("AFT_CRITICAL_N_FACTOR", "AFT_Critical_N_Factor", "PRIMITIVE", "AFT critical N-factor");
+      AddVolumeOutput("AFT_F_TURB", "AFT_F_turb", "PRIMITIVE", "AFT turbulence suppression function");
       
       break;
 
@@ -1665,6 +1669,10 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
       SetVolumeOutputValue("AFT_F_ONSET", iPoint, Node_Trans->GetAFT_Wonder_Func_var4(iPoint));
       SetVolumeOutputValue("AFT_N_MODIFY", iPoint, Node_Trans->GetAFT_Wonder_Func_var5(iPoint));
       SetVolumeOutputValue("AFT_F_LIM", iPoint, Node_Trans->GetAFT_Wonder_Func_var6(iPoint));
+      SetVolumeOutputValue("AFT_STRAIN_MAG", iPoint, Node_Trans->GetAFT_Wonder_Func_var7(iPoint));
+      SetVolumeOutputValue("AFT_VORTICITY_MAG", iPoint, Node_Trans->GetAFT_Wonder_Func_var8(iPoint));
+      SetVolumeOutputValue("AFT_CRITICAL_N_FACTOR", iPoint, Node_Trans->GetAFT_Wonder_Func_var9(iPoint));
+      SetVolumeOutputValue("AFT_F_TURB", iPoint, Node_Trans->GetAFT_Wonder_Func_var10(iPoint));
 
       break;
 
