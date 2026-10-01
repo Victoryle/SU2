@@ -807,6 +807,7 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
     const su2double beta_blended = F1_i * beta_1 + (1.0 - F1_i) * beta_2;
 
     su2double eff_intermittency = 1.0;
+    su2double f_lim = 1.0;
 
     if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM) {
       AD::SetPreaccIn(intermittency_eff_i);
@@ -815,7 +816,9 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
 
     if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
       AD::SetPreaccIn(intermittency_alge_eff_i);
+      AD::SetPreaccIn(aft_f_lim_i);
       eff_intermittency = intermittency_alge_eff_i;
+      f_lim = aft_f_lim_i;
     }
 
     if (dist_i > 1e-10) {
@@ -949,7 +952,6 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       }
 
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
-        su2double f_lim = exp(1 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
         pk = pk * eff_intermittency;
         dk = (f_lim * min(max(eff_intermittency, 0.1), 1.0) + (1.0 - f_lim) * 1.0 ) * dk;
       }

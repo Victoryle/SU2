@@ -42,13 +42,15 @@ CTransAFTVariable::CTransAFTVariable(su2double AF1, su2double AF2, su2double gam
   /*--- Setting CTransLMVariable of intermittency_Eff---*/
   Intermittency_Alge_Eff.resize(nPoint) = gammaAlgeEff;
 
+  /*--- Setting the AFT strain-vorticity limiter. ---*/
+  AFT_F_Lim.resize(nPoint) = 0.0;
+
   /*--- Setting CTransAFTVariable Wonder values. ---*/
   TempVar1.resize(nPoint) = 0.0;
   TempVar2.resize(nPoint) = 0.0;
   TempVar3.resize(nPoint) = 0.0;
   TempVar4.resize(nPoint) = 0.0;
   TempVar5.resize(nPoint) = 0.0;
-  TempVar6.resize(nPoint) = 0.0;
   TempVar7.resize(nPoint) = 0.0;
   TempVar8.resize(nPoint) = 0.0;
   TempVar9.resize(nPoint) = 0.0;
@@ -63,6 +65,12 @@ void CTransAFTVariable::SetIntermittencyAlgeEff(unsigned long iPoint, su2double 
 
 }
 
+void CTransAFTVariable::SetAFTFLim(unsigned long iPoint, su2double val_aft_f_lim) {
+
+  AFT_F_Lim(iPoint) = val_aft_f_lim;
+
+}
+
 void CTransAFTVariable::SetAFT_Wonder_Func(unsigned long iPoint, su2double var1, su2double var2,
                                            su2double var3, su2double var4, su2double var5,
                                            su2double var6, su2double var7, su2double var8,
@@ -72,7 +80,7 @@ void CTransAFTVariable::SetAFT_Wonder_Func(unsigned long iPoint, su2double var1,
   TempVar3(iPoint) = var3;
   TempVar4(iPoint) = var4;
   TempVar5(iPoint) = var5;
-  TempVar6(iPoint) = var6;
+  AFT_F_Lim(iPoint) = var6;
   TempVar7(iPoint) = var7;
   TempVar8(iPoint) = var8;
   TempVar9(iPoint) = var9;

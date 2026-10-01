@@ -389,6 +389,7 @@ void CTurbSSTSolver::Source_Residual(CGeometry *geometry, CSolver **solver_conta
     /*--- Effective Intermittency ---*/
     if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
       numerics->SetIntermittencyAlgeEff(solver_container[TRANS_SOL]->GetNodes()->GetIntermittencyAlgeEff(iPoint));
+      numerics->SetAFTFLim(solver_container[TRANS_SOL]->GetNodes()->GetAFTFLim(iPoint));
     }
 
     if (axisymmetric){

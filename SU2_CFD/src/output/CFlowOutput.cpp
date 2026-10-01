@@ -1668,7 +1668,7 @@ void CFlowOutput::LoadVolumeDataScalar(const CConfig* config, const CSolver* con
       SetVolumeOutputValue("AFT_F_ONSET_CF", iPoint, Node_Trans->GetAFT_Wonder_Func_var3(iPoint));
       SetVolumeOutputValue("AFT_F_ONSET", iPoint, Node_Trans->GetAFT_Wonder_Func_var4(iPoint));
       SetVolumeOutputValue("AFT_N_MODIFY", iPoint, Node_Trans->GetAFT_Wonder_Func_var5(iPoint));
-      SetVolumeOutputValue("AFT_F_LIM", iPoint, Node_Trans->GetAFT_Wonder_Func_var6(iPoint));
+      SetVolumeOutputValue("AFT_F_LIM", iPoint, Node_Trans->GetAFTFLim(iPoint));
       SetVolumeOutputValue("AFT_STRAIN_MAG", iPoint, Node_Trans->GetAFT_Wonder_Func_var7(iPoint));
       SetVolumeOutputValue("AFT_VORTICITY_MAG", iPoint, Node_Trans->GetAFT_Wonder_Func_var8(iPoint));
       SetVolumeOutputValue("AFT_CRITICAL_N_FACTOR", iPoint, Node_Trans->GetAFT_Wonder_Func_var9(iPoint));

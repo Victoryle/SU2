@@ -82,6 +82,7 @@ protected:
   su2double
   intermittency_eff_i, /*!< \brief effective intermittency at point i. */
   intermittency_alge_eff_i, /*!< \brief effective intermittency at point i. */
+  aft_f_lim_i, /*!< \brief AFT strain-vorticity limiter at point i. */
   intermittency_i; /*!< \brief intermittency at point i. */
   su2double
   Pressure_i,  /*!< \brief Pressure at point i. */
@@ -725,6 +726,14 @@ public:
   }
 
   /*!
+   * \brief Set the AFT strain-vorticity limiter.
+   * \param[in] val_aft_f_lim_i - Value of the AFT strain-vorticity limiter at point i.
+   */
+  void SetAFTFLim(su2double val_aft_f_lim_i) {
+    aft_f_lim_i = val_aft_f_lim_i;
+  }
+
+  /*!
    * \brief Set the value of the intermittency for the LM model.
    * \param[in] intermittency_i - Value of the intermittency at point i.
    */
@@ -743,6 +752,12 @@ public:
    * \param[in] intermittency_alge_eff_i - Value of the effective intermittency at point i.
    */
   su2double GetIntermittencyAlgeEff() const { return intermittency_alge_eff_i; }
+
+  /*!
+   * \brief Get the AFT strain-vorticity limiter.
+   * \return the AFT strain-vorticity limiter at point i.
+   */
+  su2double GetAFTFLim() const { return aft_f_lim_i; }
 
   /*!
    * \brief Set the gradient of the auxiliary variables.

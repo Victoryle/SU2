@@ -1719,6 +1719,18 @@ public:
   inline virtual void SetIntermittencyAlgeEff(unsigned long iPoint, su2double val_Intermittency_alge_eff) {}
 
   /*!
+   * \brief Get the AFT strain-vorticity limiter.
+   * \return the AFT strain-vorticity limiter.
+   */
+  inline virtual su2double GetAFTFLim(unsigned long iPoint) const { return 0.0; }
+
+  /*!
+   * \brief Set the AFT strain-vorticity limiter.
+   * \param[in] val_aft_f_lim - Value of the AFT strain-vorticity limiter.
+   */
+  inline virtual void SetAFTFLim(unsigned long iPoint, su2double val_aft_f_lim) {}
+
+  /*!
    * \brief Set the Wonder value for LM transition model
    * \param[in] val_iPoint - Value of the iPoint.
    * \param[in] tempVar1 - temp variable.

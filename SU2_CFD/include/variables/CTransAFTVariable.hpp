@@ -39,7 +39,8 @@
 class CTransAFTVariable final : public CTurbVariable {
 protected:
   VectorType Intermittency_Alge_Eff;
-  VectorType TempVar1, TempVar2, TempVar3, TempVar4, TempVar5, TempVar6, TempVar7, TempVar8, TempVar9, TempVar10;
+  VectorType AFT_F_Lim;
+  VectorType TempVar1, TempVar2, TempVar3, TempVar4, TempVar5, TempVar7, TempVar8, TempVar9, TempVar10;
 
 public:
   /*!
@@ -70,6 +71,10 @@ public:
    */
   inline su2double GetIntermittencyAlgeEff(unsigned long iPoint) const override { return Intermittency_Alge_Eff(iPoint); }
 
+  void SetAFTFLim(unsigned long iPoint, su2double val_aft_f_lim) override;
+
+  inline su2double GetAFTFLim(unsigned long iPoint) const override { return AFT_F_Lim(iPoint); }
+
   void SetAFT_Wonder_Func(unsigned long iPoint, su2double tempVar1, su2double tempVar2,
                           su2double tempVar3, su2double tempVar4, su2double tempVar5,
                           su2double tempVar6, su2double tempVar7, su2double tempVar8,
@@ -80,7 +85,7 @@ public:
   inline su2double GetAFT_Wonder_Func_var3(unsigned long iPoint) const override { return TempVar3(iPoint); }
   inline su2double GetAFT_Wonder_Func_var4(unsigned long iPoint) const override { return TempVar4(iPoint); }
   inline su2double GetAFT_Wonder_Func_var5(unsigned long iPoint) const override { return TempVar5(iPoint); }
-  inline su2double GetAFT_Wonder_Func_var6(unsigned long iPoint) const override { return TempVar6(iPoint); }
+  inline su2double GetAFT_Wonder_Func_var6(unsigned long iPoint) const override { return AFT_F_Lim(iPoint); }
   inline su2double GetAFT_Wonder_Func_var7(unsigned long iPoint) const override { return TempVar7(iPoint); }
   inline su2double GetAFT_Wonder_Func_var8(unsigned long iPoint) const override { return TempVar8(iPoint); }
   inline su2double GetAFT_Wonder_Func_var9(unsigned long iPoint) const override { return TempVar9(iPoint); }
