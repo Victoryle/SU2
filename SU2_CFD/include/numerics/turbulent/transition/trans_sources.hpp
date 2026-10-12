@@ -759,14 +759,14 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       const su2double F_on2 = ((Rev >= Revc2) && (Ma_eL >= 4.0)) ? 1.0 : 0.0;
 
       /*--- Cal Ns ---*/
-      su2double K_c1 = (-1.184 * delta_MeL * delta_MeL + 5.805 * delta_MeL) / ( delta_MeL * delta_MeL - 0.7145 * delta_MeL + 1.768 );
-      su2double K_c2 = -68.95 * exp(-1.26 * Ma_eL) - 0.1142;
-      su2double K_c3 = -8.813 * exp(-0.3315 * Ma_eL) + 2.021;
+      // su2double K_c1 = (-1.184 * delta_MeL * delta_MeL + 5.805 * delta_MeL) / ( delta_MeL * delta_MeL - 0.7145 * delta_MeL + 1.768 );
+      // su2double K_c2 = -68.95 * exp(-1.26 * Ma_eL) - 0.1142;
+      // su2double K_c3 = -8.813 * exp(-0.3315 * Ma_eL) + 2.021;
 
-      const su2double N_modify = K_c1 * exp(K_c2 * H12 * 100.0 / T_eL) + K_c3;
-      const su2double f_lim = exp(1.0 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
+      // const su2double N_modify = K_c1 * exp(K_c2 * H12 * 100.0 / T_eL) + K_c3;
+      // const su2double f_lim = exp(1.0 - StrainMag_i * StrainMag_i / VorticityMag / VorticityMag);
 
-      const su2double Ns = TransVar_i[0] + N_modify * f_lim;
+      // const su2double Ns = TransVar_i[0] + N_modify * f_lim;
 
       /*--- Cal He ---*/
       su2double VelocityNormalized[3];
