@@ -1953,6 +1953,10 @@ void CSolver::SetResidual_RMS(const CGeometry *geometry, const CConfig *config) 
 
   vector<su2double> rbuf_res(nVar);
   unsigned long Global_nPointDomain = 0;
+  bool residual_threshold_exceeded = false;
+  unsigned short residual_threshold_var = 0;
+  int residual_max_rank = rank;
+  su2double residual_max_value = -1.0;
 
   if (config->GetComm_Level() == COMM_FULL) {
 
@@ -1975,7 +1979,8 @@ void CSolver::SetResidual_RMS(const CGeometry *geometry, const CConfig *config) 
     Residual_RMS[iVar] = max(EPS*EPS, sqrt(rbuf_res[iVar]/Global_nPointDomain));
 
     if (log10(GetRes_RMS(iVar)) > 20.0) {
-      SU2_MPI::Error("SU2 has diverged (Residual > 10^20 detected).", CURRENT_FUNCTION);
+      if (!residual_threshold_exceeded) residual_threshold_var = iVar;
+      residual_threshold_exceeded = true;
     }
   }
 
@@ -1995,9 +2000,40 @@ void CSolver::SetResidual_RMS(const CGeometry *geometry, const CConfig *config) 
 
     for (unsigned short iVar = 0; iVar < nVar; iVar++) {
       for (auto iProcessor = 0ul; iProcessor < nProcessor; iProcessor++) {
+        if (residual_threshold_exceeded && (iVar == residual_threshold_var) &&
+            (rbuf_residual(iProcessor,iVar) > residual_max_value)) {
+          residual_max_value = rbuf_residual(iProcessor,iVar);
+          residual_max_rank = static_cast<int>(iProcessor);
+        }
         AddRes_Max(iVar, rbuf_residual(iProcessor,iVar), rbuf_point(iProcessor,iVar), rbuf_coord[iProcessor*nVar+iVar]);
       }
     }
+  }
+
+  if (residual_threshold_exceeded) {
+    if (config->GetComm_Level() != COMM_FULL) residual_max_value = Residual_Max[residual_threshold_var];
+
+    if (rank == MASTER_NODE) {
+      cout << endl;
+      cout << "[RESIDUAL_DIVERGENCE_DIAGNOSTIC]" << endl;
+      cout << "Inner_Iter=" << config->GetInnerIter() << endl;
+      cout << "SolverName=" << SolverName << endl;
+      cout << "iVar=" << residual_threshold_var << endl;
+      cout << std::setprecision(17);
+      cout << "Residual_RMS=" << Residual_RMS[residual_threshold_var] << endl;
+      cout << "Residual_Max=" << residual_max_value << endl;
+      cout << "Global_PointID=" << Point_Max[residual_threshold_var] << endl;
+      cout << "Owner_Rank=" << residual_max_rank << endl;
+      cout << "Coordinates=(";
+      for (unsigned short iDim = 0; iDim < nDim; iDim++) {
+        if (iDim != 0) cout << ",";
+        cout << Point_Max_Coord[residual_threshold_var][iDim];
+      }
+      cout << ")" << endl;
+      cout.flush();
+    }
+
+    SU2_MPI::Error("SU2 has diverged (Residual > 10^20 detected).", CURRENT_FUNCTION);
   }
 
   }
