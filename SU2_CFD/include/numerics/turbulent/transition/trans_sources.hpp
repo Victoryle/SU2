@@ -25,6 +25,12 @@
  */
 
 #pragma once
+#include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+
 #include "../../../../../Common/include/toolboxes/geometry_toolbox.hpp"
 #include "../../scalar/scalar_sources.hpp"
 #include "./trans_correlations.hpp"
@@ -596,9 +602,11 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       rho_eL = pow(rho_eL, 1 / gamma_Spec);
       U_eL = gamma_Spec / (gamma_Spec -1.0) * p_inf / rho_inf + 0.5 * velMag_inf * velMag_inf;
       U_eL -= gamma_Spec / (gamma_Spec -1.0) * p / rho_eL;
+      const su2double U_eL_radicand = U_eL * 2.0;
       U_eL = pow(U_eL * 2.0, 0.5);
       a_eL = sos_inf * sos_inf / (gamma_Spec -1) + velMag_inf * velMag_inf / 2.0;
       a_eL -= U_eL * U_eL / 2.0;
+      const su2double a_eL_radicand = a_eL * (gamma_Spec - 1.0);
       a_eL = pow(a_eL * (gamma_Spec -1), 0.5);
       T_eL = a_eL * a_eL / gamma_Spec / config->GetGas_Constant();
       Ma_eL = U_eL / a_eL;
@@ -656,6 +664,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double F_ratio_ZPG = c_r1 * pow(T_eL / Twall, c_r2) + c_r3;
 
       su2double theta = (Rev / max(F_ratio_ZPG, 0.1)) * (Laminar_Viscosity_i / Density_i / Velocity_Mag);
+      const su2double theta_initial = theta;
 
       su2double dp_dx = PrimVar_Grad_i[idx.Pressure()][0];
       su2double dp_dy = PrimVar_Grad_i[idx.Pressure()][1];
@@ -682,8 +691,12 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       su2double f_theta_prime = 0.0;
       su2double theta_new = 0.0;
       su2double error_theta = 1000;
+      unsigned short theta_evaluation_count = 0;
+      bool theta_converged = false;
 
       for (int iter = 0; iter < 100; iter++) {
+
+        ++theta_evaluation_count;
 
         theta_old = theta;
 
@@ -723,6 +736,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
         error_theta = fabs(theta_new - theta_old) / fabs(theta_old);
 
         if (error_theta < 0.0000001) {
+          theta_converged = true;
           break;
         }
 
@@ -833,6 +847,112 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       /*--- Source ---*/
       Residual[0] += Ps * Volume;
       Residual[1] += Pcf * Volume;
+
+      /*--- Temporary, case-targeted diagnostic for the first observed AFT_AF1 divergence. ---*/
+      const double coord_x = SU2_TYPE::GetValue(Coord_i[0]);
+      const double coord_y = SU2_TYPE::GetValue(Coord_i[1]);
+      const double coord_z = (nDim == 3) ? SU2_TYPE::GetValue(Coord_i[2]) : 0.0;
+      const bool aft_source_diagnostic_point =
+          (nDim == 3) &&
+          (std::fabs(coord_x - 6.935566376611881e-04) <= 1.0e-15) &&
+          (std::fabs(coord_y - 8.556479953093371e-04) <= 1.0e-15) &&
+          (std::fabs(coord_z - 8.691701316288505e-04) <= 1.0e-15);
+
+      if (aft_source_diagnostic_point) {
+        SU2_OMP_CRITICAL {
+          const int mpi_rank = SU2_MPI::GetRank();
+          const std::string diagnostic_filename =
+              "AFT_AF1_source_diagnostic_rank_" + std::to_string(mpi_rank) + ".log";
+          std::ofstream diagnostic_stream(diagnostic_filename, std::ios::out | std::ios::app);
+
+          if (!diagnostic_stream) {
+            std::cerr << "Unable to open AFT source diagnostic file: " << diagnostic_filename << std::endl;
+          } else {
+            auto print_value = [&diagnostic_stream](const char* name, const su2double& value) {
+              const double passive_value = SU2_TYPE::GetValue(value);
+              diagnostic_stream << name << "=" << passive_value
+                                << " finite=" << (std::isfinite(passive_value) ? 1 : 0) << std::endl;
+            };
+
+            diagnostic_stream << std::setprecision(17);
+            diagnostic_stream << "[AFT_AF1_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream << "Inner_Iter=" << config->GetInnerIter() << std::endl;
+            diagnostic_stream << "MPI_Rank=" << mpi_rank << std::endl;
+            diagnostic_stream << "Coordinates=(" << coord_x << "," << coord_y << "," << coord_z << ")" << std::endl;
+            print_value("dist", dist_i);
+            print_value("Volume", Volume);
+            print_value("Density", Density_i);
+            print_value("Laminar_Viscosity", Laminar_Viscosity_i);
+            print_value("Eddy_Viscosity", Eddy_Viscosity_i);
+            print_value("Velocity_Mag", Velocity_Mag);
+            print_value("Pressure", p);
+            print_value("dp_dx", dp_dx);
+            print_value("dp_dy", dp_dy);
+            print_value("dp_dz", dp_dz);
+            print_value("StrainMag", StrainMag_i);
+            print_value("VorticityMag", VorticityMag);
+            print_value("AF1", TransVar_i[0]);
+            print_value("AF2", TransVar_i[1]);
+            print_value("rho_eL", rho_eL);
+            print_value("U_eL_radicand", U_eL_radicand);
+            print_value("U_eL", U_eL);
+            print_value("a_eL_radicand", a_eL_radicand);
+            print_value("a_eL", a_eL);
+            print_value("T_eL", T_eL);
+            print_value("Ma_eL", Ma_eL);
+            print_value("HL", HL);
+            print_value("H12", H12);
+            print_value("Hk", Hk);
+            print_value("dN1dRet", dN1dRet);
+            print_value("dN2dRet", dN2dRet);
+            print_value("dN2_exp_argument_1", K_b2 * H12);
+            print_value("dN2_exp_argument_2", K_b4 * H12);
+            print_value("LOG10Rec1K_a4", LOG10Rec1K_a4);
+            print_value("Rec1", Rec1);
+            print_value("LOG10Rec2", LOG10Rec2);
+            print_value("Rec2", Rec2);
+            print_value("Rev", Rev);
+            print_value("F_ratio_ZPG", F_ratio_ZPG);
+            print_value("theta_initial", theta_initial);
+            print_value("theta_old", theta_old);
+            print_value("theta_new", theta_new);
+            diagnostic_stream << "theta_evaluation_count=" << theta_evaluation_count << std::endl;
+            diagnostic_stream << "theta_converged=" << (theta_converged ? 1 : 0) << std::endl;
+            print_value("theta_error", error_theta);
+            print_value("f_theta", f_theta);
+            print_value("f_theta_prime", f_theta_prime);
+            print_value("lambda_raw", lambda_raw);
+            print_value("lambda", lambda);
+            diagnostic_stream << "lambda_clipped="
+                              << ((SU2_TYPE::GetValue(lambda) != SU2_TYPE::GetValue(lambda_raw)) ? 1 : 0) << std::endl;
+            print_value("dUeL_ds", dUeL_ds);
+            print_value("F_ratio_PG", F_ratio_PG);
+            print_value("F_ratio_raw", F_ratio_raw);
+            print_value("F_ratio", F_ratio);
+            diagnostic_stream << "F_ratio_floor_active="
+                              << ((SU2_TYPE::GetValue(F_ratio_raw) < 0.1) ? 1 : 0) << std::endl;
+            print_value("F_ratio_prime", F_ratio_prime);
+            print_value("D_corr", D_corr);
+            print_value("m_corr", m_corr);
+            print_value("l_corr", l_corr);
+            print_value("F_growth", F_growth);
+            print_value("Revc1", Revc1);
+            print_value("Revc2", Revc2);
+            print_value("F_on1", F_on1);
+            print_value("F_on2", F_on2);
+            print_value("P1", P1);
+            print_value("P2", P2);
+            print_value("Ps", Ps);
+            print_value("Ps_times_Volume", Ps * Volume);
+            print_value("F_on3", F_on3);
+            print_value("Pcf", Pcf);
+            print_value("Residual_AF1", Residual[0]);
+            print_value("Residual_AF2", Residual[1]);
+            diagnostic_stream << "[/AFT_AF1_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream.flush();
+          }
+        } END_SU2_OMP_CRITICAL
+      }
 
       /*--- Implicit part ---*/
       Jacobian_i[0][0] = 0.0;
