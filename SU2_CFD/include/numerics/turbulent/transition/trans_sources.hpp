@@ -826,7 +826,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       const su2double G_cf = (Re_cf >= Re_cf0) ? 2.128 * pow(w_cf, 1.07) * pow(T_eL / Twall, 0.4) * H_sr * (1.0 + pow(fabs(H_sr - 0.35), 1.5)) : 0.0;
 
       /*--- Cal D_cf--*/
-      const su2double D_cf = (Re_cf >= Re_cf0) ?  0.7 * (1 + (gamma_Spec - 1) / 2.0 * pow(0.72, 0.5) * Ma_eL * Ma_eL) * pow(min(tanh((Re_cf - Re_cf0) / (336.0 - Re_cf0)), 0.0), 0.4) : 0.0;
+      const su2double D_cf = (Re_cf >= Re_cf0) ?  0.7 * (1 + (gamma_Spec - 1) / 2.0 * pow(0.72, 0.5) * Ma_eL * Ma_eL) * pow(max(tanh((Re_cf - Re_cf0) / (336.0 - Re_cf0)), 0.0), 0.4) : 0.0;
 
       /*--- Cal F_onset_s--
       const su2double RT = Eddy_Viscosity_i / Laminar_Viscosity_i;
