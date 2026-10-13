@@ -25,6 +25,7 @@
  */
 
 #pragma once
+#include <atomic>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -847,6 +848,122 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       /*--- Source ---*/
       Residual[0] += Ps * Volume;
       Residual[1] += Pcf * Volume;
+
+      /*--- Preserve the first AFT source evaluation that directly produces a
+       *    non-finite source contribution. This records the unmodified runtime
+       *    expressions; it does not guard, clip, or replace any value. ---*/
+      const auto is_nonfinite = [](const su2double& value) {
+        return !std::isfinite(SU2_TYPE::GetValue(value));
+      };
+      const bool aft_source_nonfinite =
+          is_nonfinite(P1) || is_nonfinite(P2) || is_nonfinite(Ps) || is_nonfinite(Pcf) ||
+          is_nonfinite(Residual[0]) || is_nonfinite(Residual[1]);
+      static std::atomic<bool> aft_nonfinite_diagnostic_written{false};
+
+      if (aft_source_nonfinite && !aft_nonfinite_diagnostic_written.exchange(true)) {
+        SU2_OMP_CRITICAL {
+          const int mpi_rank = SU2_MPI::GetRank();
+          const std::string diagnostic_filename =
+              "AFT_nonfinite_source_rank_" + std::to_string(mpi_rank) + ".log";
+          std::ofstream diagnostic_stream(diagnostic_filename, std::ios::out | std::ios::app);
+
+          if (!diagnostic_stream) {
+            std::cerr << "Unable to open AFT non-finite source diagnostic file: "
+                      << diagnostic_filename << std::endl;
+          } else {
+            auto print_value = [&diagnostic_stream](const char* name, const su2double& value) {
+              const double passive_value = SU2_TYPE::GetValue(value);
+              diagnostic_stream << name << "=" << passive_value
+                                << " finite=" << (std::isfinite(passive_value) ? 1 : 0) << std::endl;
+            };
+
+            diagnostic_stream << std::setprecision(17);
+            diagnostic_stream << "[AFT_NONFINITE_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream << "Inner_Iter=" << config->GetInnerIter() << std::endl;
+            diagnostic_stream << "MPI_Rank=" << mpi_rank << std::endl;
+            diagnostic_stream << "Coordinates=(" << SU2_TYPE::GetValue(Coord_i[0]) << ","
+                              << SU2_TYPE::GetValue(Coord_i[1]);
+            if (nDim == 3) diagnostic_stream << "," << SU2_TYPE::GetValue(Coord_i[2]);
+            diagnostic_stream << ")" << std::endl;
+            print_value("dist", dist_i);
+            print_value("Volume", Volume);
+            print_value("Density", Density_i);
+            print_value("Laminar_Viscosity", Laminar_Viscosity_i);
+            print_value("Eddy_Viscosity", Eddy_Viscosity_i);
+            print_value("Velocity_Mag", Velocity_Mag);
+            print_value("Pressure", p);
+            print_value("Temperature", temperature_local);
+            print_value("SoundSpeed", sos);
+            print_value("StrainMag", StrainMag_i);
+            print_value("VorticityMag", VorticityMag);
+            print_value("AF1_Ns", TransVar_i[0]);
+            print_value("AF2_Ncf", TransVar_i[1]);
+            print_value("rho_eL", rho_eL);
+            print_value("U_eL_radicand", U_eL_radicand);
+            print_value("U_eL", U_eL);
+            print_value("a_eL_radicand", a_eL_radicand);
+            print_value("a_eL", a_eL);
+            print_value("T_eL", T_eL);
+            print_value("Ma_eL", Ma_eL);
+            print_value("HL", HL);
+            print_value("H12", H12);
+            print_value("Hk", Hk);
+            print_value("delta_MeL", delta_MeL);
+            print_value("K_b1", K_b1);
+            print_value("K_b2", K_b2);
+            print_value("K_b3", K_b3);
+            print_value("K_b4", K_b4);
+            print_value("dN1dRet", dN1dRet);
+            print_value("dN2dRet", dN2dRet);
+            print_value("Rec1", Rec1);
+            print_value("Rec2", Rec2);
+            print_value("Rev", Rev);
+            print_value("F_ratio_ZPG", F_ratio_ZPG);
+            print_value("theta_initial", theta_initial);
+            print_value("theta_old", theta_old);
+            print_value("theta_new", theta_new);
+            diagnostic_stream << "theta_evaluation_count=" << theta_evaluation_count << std::endl;
+            diagnostic_stream << "theta_converged=" << (theta_converged ? 1 : 0) << std::endl;
+            print_value("theta_error", error_theta);
+            print_value("f_theta", f_theta);
+            print_value("f_theta_prime", f_theta_prime);
+            print_value("lambda_raw", lambda_raw);
+            print_value("lambda", lambda);
+            print_value("dUeL_ds", dUeL_ds);
+            print_value("F_ratio_PG", F_ratio_PG);
+            print_value("F_ratio_raw", F_ratio_raw);
+            print_value("F_ratio", F_ratio);
+            print_value("F_ratio_prime", F_ratio_prime);
+            print_value("D_corr", D_corr);
+            print_value("m_corr", m_corr);
+            print_value("l_corr", l_corr);
+            print_value("F_growth", F_growth);
+            print_value("Revc1", Revc1);
+            print_value("Revc2", Revc2);
+            print_value("F_on1", F_on1);
+            print_value("F_on2", F_on2);
+            print_value("Hcf", Hcf);
+            print_value("beta_h", beta_h);
+            print_value("F_ratio_cf", F_ratio_cf);
+            print_value("Re_He", Re_He);
+            print_value("Re_cf", Re_cf);
+            print_value("w_cf", w_cf);
+            print_value("H_sr", H_sr);
+            print_value("Re_cf0", Re_cf0);
+            print_value("F_on3", F_on3);
+            print_value("G_cf", G_cf);
+            print_value("D_cf", D_cf);
+            print_value("P1", P1);
+            print_value("P2", P2);
+            print_value("Ps", Ps);
+            print_value("Pcf", Pcf);
+            print_value("Residual_AF1", Residual[0]);
+            print_value("Residual_AF2", Residual[1]);
+            diagnostic_stream << "[/AFT_NONFINITE_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream.flush();
+          }
+        } END_SU2_OMP_CRITICAL
+      }
 
       /*--- Temporary, case-targeted diagnostic for the first observed AFT_AF1 divergence. ---*/
       const double coord_x = SU2_TYPE::GetValue(Coord_i[0]);

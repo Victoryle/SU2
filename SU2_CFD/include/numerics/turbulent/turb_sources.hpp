@@ -26,6 +26,13 @@
 
 #pragma once
 
+#include <atomic>
+#include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+
 #include "../../../../Common/include/toolboxes/geometry_toolbox.hpp"
 #include "../scalar/scalar_sources.hpp"
 
@@ -945,6 +952,9 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       su2double dk = beta_star * Density_i * ScalarVar_i[1] * ScalarVar_i[0] * (1.0 + zetaFMt);
       su2double dw = beta_blended * Density_i * ScalarVar_i[1] * ScalarVar_i[1] * (1.0 - 0.09/beta_blended * zetaFMt);
 
+      const su2double pk_before_intermittency = pk;
+      const su2double dk_before_intermittency = dk;
+
       /*--- LM model coupling with production and dissipation term for k transport equation---*/
       if (config->GetKind_Trans_Model() == TURB_TRANS_MODEL::LM) {
         pk = pk * eff_intermittency;
@@ -973,6 +983,79 @@ class CSourcePieceWise_TurbSST final : public CNumerics {
       /*--- Contribution due to 2D axisymmetric formulation ---*/
 
       if (axisymmetric) ResidualAxisymmetricConvectionDiffusion(alfa_blended, zeta);
+
+      /*--- Preserve the first SST source evaluation with a non-finite source
+       *    quantity. Values are recorded exactly as evaluated; no source term,
+       *    limiter, coupling value, or Jacobian is modified. ---*/
+      const auto is_nonfinite = [](const su2double& value) {
+        return !std::isfinite(SU2_TYPE::GetValue(value));
+      };
+      const bool sst_source_nonfinite =
+          is_nonfinite(P_Base) || is_nonfinite(P) || is_nonfinite(prod_limit) ||
+          is_nonfinite(pk_before_intermittency) || is_nonfinite(pk) || is_nonfinite(pw) ||
+          is_nonfinite(dk_before_intermittency) || is_nonfinite(dk) || is_nonfinite(dw) ||
+          is_nonfinite(eff_intermittency) || is_nonfinite(f_lim) ||
+          is_nonfinite(Residual[0]) || is_nonfinite(Residual[1]);
+      static std::atomic<bool> sst_nonfinite_diagnostic_written{false};
+
+      if (sst_source_nonfinite && !sst_nonfinite_diagnostic_written.exchange(true)) {
+        SU2_OMP_CRITICAL {
+          const int mpi_rank = SU2_MPI::GetRank();
+          const std::string diagnostic_filename =
+              "SST_nonfinite_source_rank_" + std::to_string(mpi_rank) + ".log";
+          std::ofstream diagnostic_stream(diagnostic_filename, std::ios::out | std::ios::app);
+
+          if (!diagnostic_stream) {
+            std::cerr << "Unable to open SST non-finite source diagnostic file: "
+                      << diagnostic_filename << std::endl;
+          } else {
+            auto print_value = [&diagnostic_stream](const char* name, const su2double& value) {
+              const double passive_value = SU2_TYPE::GetValue(value);
+              diagnostic_stream << name << "=" << passive_value
+                                << " finite=" << (std::isfinite(passive_value) ? 1 : 0) << std::endl;
+            };
+
+            diagnostic_stream << std::setprecision(17);
+            diagnostic_stream << "[SST_NONFINITE_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream << "Inner_Iter=" << config->GetInnerIter() << std::endl;
+            diagnostic_stream << "MPI_Rank=" << mpi_rank << std::endl;
+            print_value("dist", dist_i);
+            print_value("Volume", Volume);
+            print_value("Density", Density_i);
+            print_value("Laminar_Viscosity", Laminar_Viscosity_i);
+            print_value("Eddy_Viscosity", Eddy_Viscosity_i);
+            print_value("SoundSpeed", V_i[idx.SoundSpeed()]);
+            print_value("SST_k", ScalarVar_i[0]);
+            print_value("SST_omega", ScalarVar_i[1]);
+            print_value("StrainMag", StrainMag_i);
+            print_value("VorticityMag", VorticityMag);
+            print_value("divergence", diverg);
+            print_value("F1", F1_i);
+            print_value("F2", F2_i);
+            print_value("CDkw", CDkw_i);
+            print_value("alpha_blended", alfa_blended);
+            print_value("beta_blended", beta_blended);
+            print_value("Mt", Mt);
+            print_value("Mt_2", Mt_2);
+            print_value("zetaFMt", zetaFMt);
+            print_value("P_Base", P_Base);
+            print_value("P_raw", P);
+            print_value("ProductionLimit", prod_limit);
+            print_value("Pk_before_intermittency", pk_before_intermittency);
+            print_value("Pk_after_intermittency", pk);
+            print_value("Pomega", pw);
+            print_value("Dk_before_intermittency", dk_before_intermittency);
+            print_value("Dk_after_intermittency", dk);
+            print_value("Domega", dw);
+            print_value("gamma_eff", eff_intermittency);
+            print_value("f_lim", f_lim);
+            print_value("Residual_k", Residual[0]);
+            print_value("Residual_omega", Residual[1]);
+            diagnostic_stream << "[/SST_NONFINITE_SOURCE_DIAGNOSTIC]" << std::endl;
+            diagnostic_stream.flush();
+          }
+        } END_SU2_OMP_CRITICAL
+      }
 
       /*--- Implicit part ---*/
 

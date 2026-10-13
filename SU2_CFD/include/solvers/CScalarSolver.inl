@@ -29,6 +29,8 @@
 #include "../../include/solvers/CScalarSolver.hpp"
 #include "../../include/variables/CFlowVariable.hpp"
 
+#include <iomanip>
+
 template <class VariableType>
 CScalarSolver<VariableType>::CScalarSolver(CGeometry* geometry, CConfig* config, bool conservative)
     : CSolver(), Conservative(conservative),
@@ -454,6 +456,105 @@ void CScalarSolver<VariableType>::PrepareImplicitIteration(CGeometry* geometry, 
 
   su2double resMax[MAXNVAR] = {0.0}, resRMS[MAXNVAR] = {0.0};
   unsigned long idxMax[MAXNVAR] = {0};
+
+  /*--- Preserve the first local non-finite assembled scalar residual before the
+   *    implicit right-hand-side sign change and before RMS squaring removes its
+   *    point/variable identity. This is diagnostic-only and does not alter the
+   *    residual, solution, or Jacobian. ---*/
+  BEGIN_SU2_OMP_SAFE_GLOBAL_ACCESS {
+    bool diagnostic_written = false;
+
+    for (unsigned long iPoint = 0; iPoint < nPointDomain && !diagnostic_written; ++iPoint) {
+      for (unsigned short iVar = 0; iVar < nVar; ++iVar) {
+        const double assembled_residual = SU2_TYPE::GetValue(LinSysRes(iPoint, iVar));
+        if (std::isfinite(assembled_residual)) continue;
+
+        const int mpi_rank = SU2_MPI::GetRank();
+        const string diagnostic_filename =
+            "scalar_nonfinite_residual_rank_" + to_string(mpi_rank) + ".log";
+        ofstream diagnostic_stream(diagnostic_filename, ios::out | ios::app);
+
+        if (!diagnostic_stream) {
+          cerr << "Unable to open scalar residual diagnostic file: " << diagnostic_filename << endl;
+        } else {
+          const auto* flow_nodes =
+              su2staticcast_p<const CFlowVariable*>(solver_container[FLOW_SOL]->GetNodes());
+          const auto* coord = geometry->nodes->GetCoord(iPoint);
+
+          auto print_value = [&diagnostic_stream](const char* name, const su2double& value) {
+            const double passive_value = SU2_TYPE::GetValue(value);
+            diagnostic_stream << name << "=" << passive_value
+                              << " finite=" << (std::isfinite(passive_value) ? 1 : 0) << endl;
+          };
+
+          const char* variable_name = "scalar";
+          if (SolverName == "AFT model") variable_name = (iVar == 0) ? "AF1_Ns" : "AF2_Ncf";
+          if (SolverName == "SST") variable_name = (iVar == 0) ? "k" : "omega";
+
+          diagnostic_stream << setprecision(17);
+          diagnostic_stream << "[SCALAR_NONFINITE_RESIDUAL_DIAGNOSTIC]" << endl;
+          diagnostic_stream << "Inner_Iter=" << config->GetInnerIter() << endl;
+          diagnostic_stream << "MPI_Rank=" << mpi_rank << endl;
+          diagnostic_stream << "SolverName=" << SolverName << endl;
+          diagnostic_stream << "iVar=" << iVar << endl;
+          diagnostic_stream << "VariableName=" << variable_name << endl;
+          diagnostic_stream << "LocalPoint=" << iPoint << endl;
+          diagnostic_stream << "GlobalPointID=" << geometry->nodes->GetGlobalIndex(iPoint) << endl;
+          diagnostic_stream << "Coordinates=(";
+          for (unsigned short iDim = 0; iDim < nDim; ++iDim) {
+            if (iDim != 0) diagnostic_stream << ",";
+            diagnostic_stream << SU2_TYPE::GetValue(coord[iDim]);
+          }
+          diagnostic_stream << ")" << endl;
+          diagnostic_stream << "AssembledResidualBeforeRHSNegation=" << assembled_residual << endl;
+          diagnostic_stream << "isnan=" << (std::isnan(assembled_residual) ? 1 : 0) << endl;
+          diagnostic_stream << "isinf=" << (std::isinf(assembled_residual) ? 1 : 0) << endl;
+          print_value("Volume", geometry->nodes->GetVolume(iPoint));
+          print_value("WallDistance", geometry->nodes->GetWall_Distance(iPoint));
+          print_value("Density", flow_nodes->GetDensity(iPoint));
+          print_value("Pressure", flow_nodes->GetPressure(iPoint));
+          print_value("Temperature", flow_nodes->GetTemperature(iPoint));
+          print_value("SoundSpeed", flow_nodes->GetSoundSpeed(iPoint));
+          print_value("LaminarViscosity", flow_nodes->GetLaminarViscosity(iPoint));
+          print_value("EddyViscosity", flow_nodes->GetEddyViscosity(iPoint));
+          print_value("StrainMag", flow_nodes->GetStrainMag(iPoint));
+          for (unsigned short iDim = 0; iDim < nDim; ++iDim) {
+            diagnostic_stream << "Velocity_" << iDim << "="
+                              << SU2_TYPE::GetValue(flow_nodes->GetVelocity(iPoint, iDim)) << endl;
+          }
+          for (unsigned short jVar = 0; jVar < nVar; ++jVar) {
+            diagnostic_stream << "ScalarSolution_" << jVar << "="
+                              << SU2_TYPE::GetValue(nodes->GetSolution(iPoint, jVar)) << endl;
+            for (unsigned short iDim = 0; iDim < nDim; ++iDim) {
+              diagnostic_stream << "ScalarGradient_" << jVar << "_" << iDim << "="
+                                << SU2_TYPE::GetValue(nodes->GetGradient(iPoint, jVar, iDim)) << endl;
+            }
+          }
+
+          if (SolverName == "AFT model") {
+            const auto* turb_nodes = solver_container[TURB_SOL]->GetNodes();
+            print_value("SST_k", turb_nodes->GetSolution(iPoint, 0));
+            print_value("SST_omega", turb_nodes->GetSolution(iPoint, 1));
+            print_value("AFT_IntermittencyAlgeEff", nodes->GetIntermittencyAlgeEff(iPoint));
+            print_value("AFT_f_lim", nodes->GetAFTFLim(iPoint));
+          } else if (SolverName == "SST" && config->GetKind_Trans_Model() == TURB_TRANS_MODEL::AFT) {
+            const auto* trans_nodes = solver_container[TRANS_SOL]->GetNodes();
+            print_value("AFT_AF1_Ns", trans_nodes->GetSolution(iPoint, 0));
+            print_value("AFT_AF2_Ncf", trans_nodes->GetSolution(iPoint, 1));
+            print_value("AFT_IntermittencyAlgeEff", trans_nodes->GetIntermittencyAlgeEff(iPoint));
+            print_value("AFT_f_lim", trans_nodes->GetAFTFLim(iPoint));
+          }
+
+          diagnostic_stream << "[/SCALAR_NONFINITE_RESIDUAL_DIAGNOSTIC]" << endl;
+          diagnostic_stream.flush();
+        }
+
+        diagnostic_written = true;
+        break;
+      }
+    }
+  }
+  END_SU2_OMP_SAFE_GLOBAL_ACCESS
 
   /*--- Build implicit system ---*/
 
