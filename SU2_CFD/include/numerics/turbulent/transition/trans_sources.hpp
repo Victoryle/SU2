@@ -632,7 +632,7 @@ class CSourcePieceWise_TransAFT final : public CNumerics {
       const su2double dN1dRet = K_a1 * tanh(max(K_a2 * Hk - K_a3, 0.0));
 
       /*--- Cal dN2dRet ---*/
-      su2double delta_MeL = max(Ma_eL - 4.0, 0.0);
+      su2double delta_MeL = max(Ma_eL - 4.0, 0.01);
       
       su2double K_b1 = (- 7.928e-2 * delta_MeL * delta_MeL + 5.724e-1 * delta_MeL) / (delta_MeL + 1.332e-2);
       su2double K_b2 = (+ 1.401e-1 * delta_MeL * delta_MeL - 9.797e-1 * delta_MeL) / (delta_MeL - 5.596e-3);
